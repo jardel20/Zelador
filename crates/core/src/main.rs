@@ -15,7 +15,21 @@ use zelador_core::units::format_bytes;
 
 const GIB: u64 = 1024 * 1024 * 1024;
 
-const USAGE: &str = "uso: zelador-core <status|space> [--flake <pasta>] [--host <nome>]";
+const USAGE: &str = "uso: zelador-core <comando> [--flake <pasta>] [--host <nome>] [opções]
+
+Comandos (todos só leem, exceto onde indicado):
+  status      geração em uso, commits pendentes, inputs do flake, Flatpak
+  space       uso do /nix/store por categoria
+  clean       simula a limpeza; com --execute --yes, executa (pede senha uma vez)
+              [--keep-system N] [--keep-hm N] [--keep-days N] [--no-generations]
+              [--no-links] [--flatpak] [--optimise]
+  update      constrói a atualização sem aplicar [--input NOME]... [--pin NOME=REV]
+              [--state-dir PASTA]
+  activate    ativa um sistema já construído: activate <caminho-do-store> <switch|boot|test>
+  check       verifica inputs velhos, pouco espaço e lixo grande [--notify]
+              [--stale-days N] [--min-free-gib N] [--reclaimable-gib N]
+              [--notify-send PROGRAMA] [--open PROGRAMA]
+  history     últimas operações registradas";
 
 fn main() -> ExitCode {
     tracing_subscriber::fmt()

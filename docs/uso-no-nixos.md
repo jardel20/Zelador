@@ -6,8 +6,8 @@ sistema, você ativa o módulo por conta própria, colando o trecho abaixo no se
 ## O que o módulo faz
 
 - instala o app (`zelador`), a CLI de diagnóstico (`zelador-core`) e o helper privilegiado;
-- instala a *action* do polkit `br.dev.zelador.helper`, que aponta para o helper no store e
-  **exige senha de administrador a cada operação**;
+- instala a *action* do polkit `br.dev.zelador.helper`, que **exige senha de administrador a
+  cada operação**;
 - instala as fontes Poppins e JetBrains Mono;
 - liga o `zelador-helper.socket` no systemd. O app **não tem privilégio nenhum**: ele conversa
   com esse socket (`/run/zelador/helper.sock`), o systemd inicia o helper como root para cada
@@ -21,7 +21,7 @@ sistema, você ativa o módulo por conta própria, colando o trecho abaixo no se
 {
   inputs = {
     # ... seus inputs ...
-    zelador.url = "path:/caminho/para/Zelador"; # ou o endereço do repositório
+    zelador.url = "github:jardel20/Zelador"; # ou "path:/caminho/para/Zelador"
     zelador.inputs.nixpkgs.follows = "nixpkgs";
   };
 
@@ -54,3 +54,30 @@ zelador-core clean           # simula a limpeza, sem alterar nada
 
 A limpeza real só roda com `zelador-core clean --execute --yes` (ou pelo botão "Limpar" do
 app, que pede confirmação) e pede a senha de administrador **uma vez**.
+
+## Verificação periódica (opcional)
+
+```nix
+programs.zelador.checkTimer = {
+  enable = true;           # timer de usuário; só avisa, nunca altera o sistema
+  interval = "weekly";     # OnCalendar do systemd
+  staleDays = 14;          # avisa se um input tem mais dias que isto
+  minFreeGiB = 10;         # avisa se o espaço livre cai abaixo disto
+  reclaimableGiB = 20;     # avisa se podem sair mais que isto (0 desliga)
+};
+programs.zelador.flakePath = "/etc/nixos";   # flake que o timer observa
+```
+
+A notificação usa `notify-send` e depende de o seu daemon de notificações aceitá-lo. Para ver o
+que o timer faria agora, sem notificar: `zelador-core check`.
+
+## Problemas comuns
+
+| Sintoma | Causa e solução |
+|---|---|
+| Aviso "O serviço do helper não está ativo" | O módulo não está ativado. Ative `programs.zelador.enable` e aplique. Confira com `systemctl status zelador-helper.socket` |
+| Pede senha, mas a janela não aparece / a ação falha com "não autorizado" (código 77) | Falta um agente de autenticação do polkit na sessão. Inicie um (por exemplo, o do seu ambiente gráfico) |
+| "outra operação está em andamento" (código 75) | O helper só roda uma operação por vez. Aguarde a anterior terminar |
+| A atualização falha no build com "opção removida" | O nixpkgs novo removeu uma opção que a sua configuração usa. Nada foi alterado no sistema: corrija a configuração e tente de novo |
+| "Espaço insuficiente para esta atualização" | Libere espaço (tela *Liberar espaço*) e tente de novo |
+| Números de espaço parecem menores que o esperado | São **limites superiores**; o Nix compartilha arquivos idênticos entre caminhos |
