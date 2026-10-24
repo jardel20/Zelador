@@ -1,0 +1,71 @@
+@nix {"action":"msg","level":4,"msg":"evaluating file '«nix-internal»/derivation-internal.nix'"}
+@nix {"action":"start","id":306553290752000,"level":6,"parent":0,"text":"querying info about missing paths","type":0}
+@nix {"action":"start","fields":["/nix/store/hizsa211jibp7cd5g9k5qickz5w4hdra-zelador-falha","https://cache.nixos.org"],"id":306553290752001,"level":4,"parent":0,"text":"querying info about '/nix/store/hizsa211jibp7cd5g9k5qickz5w4hdra-zelador-falha' on 'https://cache.nixos.org'","type":109}
+@nix {"action":"start","fields":["https://cache.nixos.org/hizsa211jibp7cd5g9k5qickz5w4hdra.narinfo"],"id":306553290752002,"level":4,"parent":306553290752001,"text":"downloading 'https://cache.nixos.org/hizsa211jibp7cd5g9k5qickz5w4hdra.narinfo'","type":101}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752002,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752002,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752002,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752002,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752002,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752002,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752002,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752002,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752002,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752002,"type":105}
+@nix {"action":"result","fields":[3,3,0,0],"id":306553290752002,"type":105}
+@nix {"action":"result","fields":[3,3,0,0],"id":306553290752002,"type":105}
+@nix {"action":"result","fields":[3,3,0,0],"id":306553290752002,"type":105}
+@nix {"action":"stop","id":306553290752001}
+@nix {"action":"stop","id":306553290752002}
+@nix {"action":"start","fields":["/nix/store/hizsa211jibp7cd5g9k5qickz5w4hdra-zelador-falha","https://niri.cachix.org"],"id":306553290752003,"level":4,"parent":0,"text":"querying info about '/nix/store/hizsa211jibp7cd5g9k5qickz5w4hdra-zelador-falha' on 'https://niri.cachix.org'","type":109}
+@nix {"action":"start","fields":["https://niri.cachix.org/hizsa211jibp7cd5g9k5qickz5w4hdra.narinfo"],"id":306553290752004,"level":4,"parent":306553290752003,"text":"downloading 'https://niri.cachix.org/hizsa211jibp7cd5g9k5qickz5w4hdra.narinfo'","type":101}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[15,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[15,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"result","fields":[15,0,0,0],"id":306553290752004,"type":105}
+@nix {"action":"stop","id":306553290752003}
+@nix {"action":"stop","id":306553290752004}
+@nix {"action":"stop","id":306553290752000}
+@nix {"action":"msg","level":3,"msg":"this derivation will be built:"}
+@nix {"action":"msg","level":3,"msg":"  /nix/store/2fxqcvhazb16vx1ba1d1djcn4d4vykd6-zelador-falha.drv"}
+@nix {"action":"start","id":306553290752005,"level":0,"parent":0,"text":"","type":102}
+@nix {"action":"start","id":306553290752006,"level":0,"parent":0,"text":"","type":104}
+@nix {"action":"start","id":306553290752007,"level":0,"parent":0,"text":"","type":103}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752006,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752007,"type":105}
+@nix {"action":"result","fields":[101,0],"id":306553290752005,"type":106}
+@nix {"action":"result","fields":[100,0],"id":306553290752005,"type":106}
+@nix {"action":"start","id":306553290752008,"level":6,"parent":0,"text":"querying info about missing paths","type":0}
+@nix {"action":"stop","id":306553290752008}
+@nix {"action":"result","fields":[0,1,0,0],"id":306553290752006,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752007,"type":105}
+@nix {"action":"result","fields":[101,0],"id":306553290752005,"type":106}
+@nix {"action":"result","fields":[100,0],"id":306553290752005,"type":106}
+@nix {"action":"start","fields":["/nix/store/2fxqcvhazb16vx1ba1d1djcn4d4vykd6-zelador-falha.drv","",1,1],"id":306553290752009,"level":3,"parent":0,"text":"building '/nix/store/2fxqcvhazb16vx1ba1d1djcn4d4vykd6-zelador-falha.drv'","type":105}
+@nix {"action":"result","fields":[0,1,1,0],"id":306553290752006,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752007,"type":105}
+@nix {"action":"result","fields":[101,0],"id":306553290752005,"type":106}
+@nix {"action":"result","fields":[100,0],"id":306553290752005,"type":106}
+@nix {"action":"result","fields":["boom"],"id":306553290752009,"type":101}
+@nix {"action":"result","fields":[0,1,0,1],"id":306553290752006,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":306553290752007,"type":105}
+@nix {"action":"result","fields":[101,0],"id":306553290752005,"type":106}
+@nix {"action":"result","fields":[100,0],"id":306553290752005,"type":106}
+@nix {"action":"stop","id":306553290752009}
+@nix {"action":"stop","id":306553290752007}
+@nix {"action":"stop","id":306553290752006}
+@nix {"action":"stop","id":306553290752005}
+@nix {"action":"msg","column":null,"file":null,"level":0,"line":null,"msg":"\u001b[31;1merror:\u001b[0m Cannot build '\u001b[35;1m/nix/store/2fxqcvhazb16vx1ba1d1djcn4d4vykd6-zelador-falha.drv\u001b[0m'.\n       Reason: \u001b[31;1mbuilder failed with exit code 1\u001b[0m.\n       Output paths:\n         \u001b[35;1m/nix/store/hizsa211jibp7cd5g9k5qickz5w4hdra-zelador-falha\u001b[0m\n       Last 1 log lines:\n       > boom\n       For full logs, run:\n         \u001b[1mnix log /nix/store/2fxqcvhazb16vx1ba1d1djcn4d4vykd6-zelador-falha.drv\u001b[0m","raw_msg":"Cannot build '\u001b[35;1m/nix/store/2fxqcvhazb16vx1ba1d1djcn4d4vykd6-zelador-falha.drv\u001b[0m'.\nReason: \u001b[31;1mbuilder failed with exit code 1\u001b[0m.\nOutput paths:\n  \u001b[35;1m/nix/store/hizsa211jibp7cd5g9k5qickz5w4hdra-zelador-falha\u001b[0m\nLast 1 log lines:\n> boom\nFor full logs, run:\n  \u001b[1mnix log /nix/store/2fxqcvhazb16vx1ba1d1djcn4d4vykd6-zelador-falha.drv\u001b[0m"}

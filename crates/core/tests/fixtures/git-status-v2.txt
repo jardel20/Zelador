@@ -1,0 +1,7 @@
+# branch.oid 0fea6435c7095f229edcdee581574c50363372a4
+# branch.head master
+# branch.upstream origin/master
+# branch.ab +0 -0
+1 .M N... 100644 100644 100644 0d423571f311f156566b91b34915be200a5fd293 0d423571f311f156566b91b34915be200a5fd293 flake.lock
+1 .M N... 100644 100644 100644 d456c5da14b2049b93e9e5e3f6af81ce00a394f7 d456c5da14b2049b93e9e5e3f6af81ce00a394f7 modules/home.nix
+1 .M N... 100644 100644 100644 bb15bcbcdeb0f7b7e207df22f958383a358c5137 bb15bcbcdeb0f7b7e207df22f958383a358c5137 modules/noctalia-config.toml

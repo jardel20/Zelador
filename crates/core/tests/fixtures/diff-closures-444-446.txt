@@ -1,0 +1,236 @@
+aalib: 1.4rc5 → ∅, [32;1m-111.7 KiB[0m
+ada: [32;1m-448.1 KiB[0m
+appimage: ε → ∅
+appimage-run: ε → 0, 0-fhsenv, [31;1m7.0 MiB[0m
+appimage-run-fhsenv: ε → ∅, [32;1m-7.0 MiB[0m
+aws-c-auth: ∅ → 1.0.0, [31;1m46.6 KiB[0m
+aws-c-cal: ∅ → 1.0.0, [31;1m23.7 KiB[0m
+aws-c-common: ∅ → 1.0.0, [31;1m38.0 KiB[0m
+aws-c-compression: ∅ → 1.0.0
+aws-c-event-stream: ∅ → 1.0.0
+aws-c-http: ∅ → 1.0.0
+aws-c-io: ∅ → 1.0.0
+aws-c-mqtt: ∅ → 1.0.0, [31;1m22.5 KiB[0m
+aws-c-s3: ∅ → 1.1.2, [31;1m94.4 KiB[0m
+aws-c-sdkutils: ∅ → 1.0.0, [31;1m23.5 KiB[0m
+aws-checksums: ∅ → 1.0.0, [31;1m84.2 KiB[0m
+aws-crt-cpp: ∅ → 0.43.6, [31;1m167.3 KiB[0m
+bash: 5.3p15 → 5.3p20
+bash-interactive: 5.3p15 → 5.3p20
+bcachefs-tools: [31;1m16.1 KiB[0m
+breeze-icons: 6.30.0 → 6.31.0, [32;1m-12.7 MiB[0m
+c-ares: [32;1m-425.7 KiB[0m
+cargo: 1.98.1 → 1.99.0, [31;1m211.6 KiB[0m
+cargo-edit: [32;1m-37.0 KiB[0m
+clang: [32;1m-24.2 KiB[0m
+claude-code: 2.1.300 → 2.1.303, [31;1m18.0 MiB[0m
+clippy: 1.98.1 → 1.99.0, [32;1m-845.6 KiB[0m
+cmake: 4.4.3 → 4.4.4, [31;1m21.0 KiB[0m
+codex: 0.162.1 → 0.163.0, [32;1m-50.1 MiB[0m
+coreutils: ∅ → 9.12, [32;1m-10.5 KiB[0m
+coreutils-full: 9.11 → 9.12, [31;1m623.7 KiB[0m
+dbus-glib: 0.114 → 0.116, [32;1m-44.2 KiB[0m
+deno: [31;1m210.4 KiB[0m
+direnv: 2.37.1 → 2.38.2, [31;1m79.3 KiB[0m
+docker: 29.8.2 → 29.9.1, [31;1m67.8 KiB[0m
+docker-buildx: [31;1m16.2 KiB[0m
+docker-compose: [31;1m8.2 KiB[0m
+docker-containerd: 29.8.2 → 29.9.1, [31;1m1.4 MiB[0m
+docker-runc: 29.8.2 → 29.9.1
+docker-tini: 29.8.2 → 29.9.1
+electron-unwrapped: [31;1m18.8 KiB[0m
+expat: 2.8.5 → 2.9.0, [31;1m10.2 KiB[0m
+extra-cmake-modules: 6.30.0 → 6.31.0
+faad2: ∅ → 2.11.4
+fastfetch-unwrapped: [31;1m28.0 KiB[0m
+ffado: ∅ → 2.5.0, [31;1m496.4 KiB[0m
+ffmpeg: 8.1.2, 9.0.1 → 8.1.3, 9.0.2, [31;1m64.5 KiB[0m
+ffmpeg-headless: 9.0.1 → 9.0.2, [31;1m29.6 KiB[0m
+firefox: ∅ → 158.0, [31;1m1.5 MiB[0m
+firefox-unwrapped: ∅ → 158.0, [31;1m391.3 MiB[0m
+fribidi: ∅ → 1.0.17
+getconf-glibc: 2.44-25 → 2.44-57
+getent-glibc: 2.44-25 → 2.44-57
+git: 2.55.0 → 2.56.0, [31;1m3.5 MiB[0m
+git-lfs: [31;1m8.2 KiB[0m
+git-minimal: 2.55.0 → 2.56.0, [31;1m3.3 MiB[0m
+glibc: 2.44-25 → 2.44-57
+glibc-locales: 2.44-25 → 2.44-57
+glibmm: [32;1m-8.2 MiB[0m
+glslang: 16.4.0 → 16.6.0, [31;1m131.5 KiB[0m
+gnum4: [32;1m-2.1 MiB[0m
+google-chrome: 155.0.8059.79 → 155.0.8059.84, [31;1m1010.5 KiB[0m
+gpu-screen-recorder: 6.1.3 → 6.1.4
+groff: 1.24.1 → 1.24.2
+gst-plugins-good: [32;1m-90.8 KiB[0m
+gtest: [32;1m-1.0 MiB[0m
+gzip: ∅ → 1.15, [31;1m18.2 KiB[0m
+harfbuzz: ∅ → 14.5.1, [31;1m626.1 KiB[0m
+harfbuzz-icu: 13.2.1 → 14.5.1, [31;1m205.5 KiB[0m
+hplip: 3.26.4 → 3.26.6, [31;1m38.6 KiB[0m
+hwdata: 0.411 → 0.412, [31;1m19.6 KiB[0m
+hwdb.bin: [31;1m31.5 KiB[0m
+hwloc: 2.14.0 → 2.15.0
+imagemagick: 7.1.2-31 → 7.1.2-34, [31;1m29.5 KiB[0m
+imlib2: 1.12.6 → 1.12.7, [31;1m8.5 KiB[0m
+initrd-linux: 6.18.56 → 6.18.57, [32;1m-1.8 MiB[0m
+iproute2: 7.1.0 → 7.2.0, [31;1m15.4 KiB[0m
+jemalloc: 5.3.1 → 5.4.0, [32;1m-295.0 KiB[0m
+karchive: 6.30.0 → 6.31.0
+kbd: [32;1m-90.7 KiB[0m
+kcolorscheme: 6.30.0 → 6.31.0
+kconfig: 6.30.0 → 6.31.0, [31;1m38.8 KiB[0m
+kcoreaddons: 6.30.0 → 6.31.0, [31;1m57.9 KiB[0m
+kcrash: 6.30.0 → 6.31.0
+kdbusaddons: 6.30.0 → 6.31.0
+kguiaddons: 6.30.0 → 6.31.0, [31;1m18.3 KiB[0m
+ki18n: 6.30.0 → 6.31.0
+kiconthemes: 6.30.0 → 6.31.0
+kirigami: 6.30.0 → 6.31.0, [31;1m1.6 MiB[0m
+knotifications: 6.30.0 → 6.31.0, [32;1m-17.6 KiB[0m
+kwidgetsaddons: 6.30.0 → 6.31.0, [31;1m25.1 KiB[0m
+kwindowsystem: 6.30.0 → 6.31.0, [31;1m14.2 KiB[0m
+ldns: 1.9.2 → ∅, [32;1m-630.3 KiB[0m
+libaom: 3.15.0 → 3.15.1
+libbpf: ∅ → 1.8.0, [31;1m111.3 KiB[0m
+libcamera: [31;1m1.9 MiB[0m
+libdeflate: ∅ → 1.26
+libdovi: [31;1m300.0 KiB[0m
+libev: [32;1m-225.9 KiB[0m
+libheif: 1.23.5 → 1.23.6, [32;1m-33.6 KiB[0m
+libimagequant: [31;1m349.7 KiB[0m
+libimobiledevice-glue: 1.3.2 → 1.3.3
+libjpeg-turbo: 3.1.4.1 → 3.2.0, [31;1m949.8 KiB[0m
+libksba: 1.8.0 → 1.8.1
+libmd: 1.2.0 → 1.3.0
+libpng: 1.6.58 → 1.6.59
+libpng-apng: ∅ → 1.6.59
+libqalculate: 5.13.1 → 5.13.2
+libraw: ∅ → 0.22.2, [31;1m16.9 KiB[0m
+librsvg: [31;1m27.1 KiB[0m
+libselinux: ∅ → 3.11, [31;1m31.0 KiB[0m
+libsigc++: [32;1m-86.2 KiB[0m
+libsodium: 1.0.22-unstable-2026-08-13 → 1.0.22-unstable-2026-09-28, [31;1m16.5 KiB[0m
+libsoup: ∅ → 3.8.0, [31;1m87.0 KiB[0m
+libuv: ∅ → 1.53.0, [31;1m19.4 KiB[0m
+libxml++: [32;1m-578.6 KiB[0m
+libxmp: 4.7.3 → 4.7.4
+linux: 6.18.56 → 6.18.57, [32;1m-7.5 MiB[0m
+linux-firmware: 20260916 → 20261019, [31;1m15.8 MiB[0m
+llhttp: [32;1m-41.6 KiB[0m
+loupe: [32;1m-9.5 KiB[0m
+lua: ∅ → 5.4.9
+lz4: [31;1m191.8 KiB[0m
+make-initrd-ng: [32;1m-24.2 KiB[0m
+merve: [32;1m-23.5 KiB[0m
+mesa: [32;1m-267.8 KiB[0m
+mission-center: [32;1m-954.5 KiB[0m
+moby: 29.8.2 → 29.9.1, [31;1m1.0 MiB[0m
+nbytes: [32;1m-30.9 KiB[0m
+nghttp2: [32;1m-3.6 MiB[0m
+nghttp3: 1.17.0 → 1.18.0, [32;1m-126.1 KiB[0m
+ngtcp2: [32;1m-302.7 KiB[0m
+nh-unwrapped: [31;1m54.5 KiB[0m
+niri: [32;1m-71.3 KiB[0m
+nirinit: [32;1m-11.9 KiB[0m
+nixos-system-nixos: 26.11.20261015.fe13242 → 26.11.20261020.02c087f
+nodejs: [32;1m-77.7 KiB[0m
+nodejs-slim: [32;1m-12.8 MiB[0m
+nsncd: [31;1m39.9 KiB[0m
+nss-cacert: [31;1m650.9 KiB[0m
+nuspell: 5.1.8 → 5.1.9
+onnxruntime: ∅ → 1.27.1, [31;1m56.3 MiB[0m
+openapv: ∅ → 1.1.2.0, [31;1m249.0 KiB[0m
+openexr: 3.5.0 → 3.5.1
+openjdk: [31;1m31.2 KiB[0m
+openssh: 10.5p1 → 10.6p1, [31;1m44.1 KiB[0m
+openssl: 3.5.8 → 3.5.9, [31;1m39.5 KiB[0m
+openvino: ∅ → 2026.4.0, [31;1m164.8 MiB[0m
+p11-kit: ∅ → 0.26.5, [31;1m74.2 KiB[0m
+pciutils: [31;1m9.8 KiB[0m
+pcre2: 10.48 → 10.49
+perl5.42.3-XML-Twig: 3.52 → 3.54, [31;1m12.2 KiB[0m
+poppler-glib: 26.09.0 → 26.10.0, [31;1m10.2 KiB[0m
+poppler-utils: 26.09.0 → 26.10.0, [31;1m10.7 KiB[0m
+protobuf: ∅ → 36.2, [31;1m13.2 MiB[0m
+psqlodbc: 18.00.0003 → 18.00.0004
+python3: 3.14.7 → 3.14.8, [31;1m1007.0 KiB[0m
+python3.14-afdko: [31;1m8.0 KiB[0m
+python3.14-autocommand: 2.2.2 → ∅, [32;1m-92.8 KiB[0m
+python3.14-certifi: 2026.06.17 → 2026.07.22
+python3.14-cffi: 2.1.0 → 2.1.1
+python3.14-charset-normalizer: 3.4.9 → 3.5.1, [32;1m-458.0 KiB[0m
+python3.14-cryptography: 50.0.0 → 50.0.2, [32;1m-27.8 KiB[0m
+python3.14-distutils: 83.0.0 → ∅, [32;1m-14.7 KiB[0m
+python3.14-inflect: 7.5.0 → ∅, [32;1m-383.9 KiB[0m
+python3.14-jaraco-classes: 3.4.0 → ∅, [32;1m-53.7 KiB[0m
+python3.14-jaraco-collections: 5.2.1 → ∅, [32;1m-116.0 KiB[0m
+python3.14-jaraco-context: 6.1.0 → ∅, [32;1m-47.8 KiB[0m
+python3.14-jaraco-functools: 4.4.0 → ∅, [32;1m-79.3 KiB[0m
+python3.14-jaraco-text: 4.0.0 → ∅, [32;1m-92.0 KiB[0m
+python3.14-lxml: 6.1.1 → 6.1.3, [31;1m348.6 KiB[0m
+python3.14-markdown: 3.10.2 → 3.10.3, [31;1m32.9 KiB[0m
+python3.14-more-itertools: 11.1.0 → ∅, [32;1m-789.6 KiB[0m
+python3.14-packaging: 26.2 → ∅, [32;1m-1.2 MiB[0m
+python3.14-pyclipper: [31;1m13.7 KiB[0m
+python3.14-pygments: 2.20.0 → 2.21.0, [31;1m203.0 KiB[0m
+python3.14-pyxdg: 0.28 → ∅, [32;1m-630.6 KiB[0m
+python3.14-ruamel-yaml-clib: [31;1m9.5 KiB[0m
+python3.14-setuptools: 83.0.0 → ∅, [32;1m-11.1 MiB[0m
+python3.14-six: 1.17.0 → ∅, [32;1m-124.3 KiB[0m
+python3.14-tqdm: 4.68.4 → 4.70.0, [32;1m-596.7 KiB[0m
+python3.14-typeguard: 4.5.2 → ∅, [32;1m-501.2 KiB[0m
+python3.14-typing-extensions: 4.16.0 → ∅, [32;1m-531.2 KiB[0m
+python3.14-websockets: 16.1 → 17.0.1, [31;1m426.1 KiB[0m
+python3.14-zopfli: 0.4.0 → 0.4.3
+qpdf: 12.3.2 → 12.4.2, [31;1m151.6 KiB[0m
+qqc2-desktop-style: 6.30.0 → 6.31.0, [31;1m1.1 MiB[0m
+qt5compat: 6.11.2 → 6.12.0, [31;1m256.3 KiB[0m
+qtbase: 6.11.2, 6.11.2-only-plugins → 6.12.0, 6.12.0-only-plugins, [31;1m1.5 MiB[0m
+qtdeclarative: 6.11.2 → 6.12.0, [31;1m17.1 MiB[0m
+qtshadertools: 6.11.2 → 6.12.0, [31;1m203.8 KiB[0m
+qtsvg: 6.11.2 → 6.12.0, [31;1m17.9 KiB[0m
+qttools: 6.11.2 → 6.12.0, [31;1m852.8 KiB[0m
+qttranslations: 6.11.2 → 6.12.0, [31;1m499.0 KiB[0m
+qtwayland: 6.11.2 → 6.12.0, [31;1m408.0 KiB[0m
+resvg: [32;1m-51.1 KiB[0m
+rootlesskit: [31;1m21.7 KiB[0m
+rust-analyzer-unwrapped: [32;1m-174.9 KiB[0m
+rust-lib: [31;1m864.8 KiB[0m
+rustc: 1.98.1 → 1.99.0, [31;1m29.4 MiB[0m
+rustc-wrapper: 1.98.1 → 1.99.0
+rustfmt: 1.98.1 → 1.99.0, [31;1m118.2 KiB[0m
+s2n-tls: 1.7.8 → 1.7.9
+samba: [31;1m622.8 KiB[0m
+sdl2-compat: 2.32.72 → 2.32.74
+sdl3: 3.4.16 → 3.4.18, [31;1m9.9 KiB[0m
+shadow: 4.20.2 → 4.20.3
+simdjson: 4.6.8 → 4.6.11, [32;1m-7.4 MiB[0m
+simdutf: 9.1.1 → 9.2.1, [31;1m73.0 KiB[0m
+sndio: ∅ → 1.10.0, [31;1m353.5 KiB[0m
+sonnet: 6.30.0 → 6.31.0, [31;1m14.0 KiB[0m
+source: [31;1m4.7 MiB[0m
+speech-dispatcher: [32;1m-806.2 KiB[0m
+spidermonkey: 140.14.0 → 140.16.0
+starship: 1.26.0 → 1.27.0, [31;1m407.4 KiB[0m
+switch-to-configuration: [32;1m-8.8 KiB[0m
+system: [31;1m10.4 KiB[0m
+systemd: 261.3 → 262, [31;1m34.9 MiB[0m
+systemd-minimal: 261.3 → 262, [32;1m-4.0 MiB[0m
+systemd-minimal-libs: 261.3 → 262, [32;1m-9.0 MiB[0m
+typst: [31;1m100.1 KiB[0m
+tzdata: 2026d → 2026e
+unit-systemd-pcrlogin: ∅ → .service
+upower: 1.91.4 → 1.91.5
+utf8proc: ∅ → 2.12.0, [31;1m12.7 KiB[0m
+util-linux: 2.42.3 → 2.42.4, [31;1m385.4 KiB[0m
+util-linux-minimal: 2.42.3 → 2.42.4, [31;1m349.6 KiB[0m
+uvwasi: [32;1m-42.4 KiB[0m
+vscode: 1.140.0 → 1.142.0, [32;1m-8.5 MiB[0m
+vscode-extension-vadimcn-vscode-lldb: [32;1m-33.3 KiB[0m
+vscode-langservers-extracted: 1.126.04524 → 1.140.06880, [32;1m-38.2 KiB[0m
+vulkan-headers: 1.4.357.0 → 1.4.363.0, [31;1m757.8 KiB[0m
+vulkan-loader: 1.4.357.0 → 1.4.363.0, [31;1m56.1 KiB[0m
+xdg-dbus-proxy: 0.1.8 → 0.1.9
+xdg-utils: [31;1m8.4 KiB[0m
+xwayland-satellite: [31;1m9.2 KiB[0m

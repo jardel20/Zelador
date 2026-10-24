@@ -1,0 +1,15 @@
+
+
+ 1.	   	org.freedesktop.Platform.GL.default	24.08	r
+ 2.	   	org.freedesktop.Platform.GL.default	24.08extra	r
+ 3.	   	org.freedesktop.Platform.VAAPI.Intel	24.08	r
+ 4.	   	org.freedesktop.Platform	24.08	r
+ 5.	   	org.freedesktop.Platform.Locale	24.08	r
+ 6.	   	org.freedesktop.Platform.openh264	2.5.1	r
+ 7.	   	org.gnome.Platform	49	r
+ 8.	   	org.gnome.Platform.Locale	49	r
+ 9.	   	org.gnome.Platform	50	r
+10.	   	org.gnome.Platform.Locale	50	r
+11.	   	org.freedesktop.Platform.codecs-extra	25.08-extra	r
+
+Proceed with these changes to the system installation? [Y/n]: n

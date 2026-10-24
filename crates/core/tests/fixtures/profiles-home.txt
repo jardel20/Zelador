@@ -1,0 +1,10 @@
+lrwxrwxrwx - user 2026-05-13 09:39:25.733501025 -0300 channels -> channels-1-link
+lrwxrwxrwx - user 2026-02-25 14:54:55.907215845 -0300 channels-1-link -> /nix/store/fxlgyh00fgh180vl843z3qy7i2k52aj1-user-environment
+lrwxrwxrwx - user 2026-09-03 21:50:29.415609611 -0300 home-manager -> home-manager-5-link
+lrwxrwxrwx - user 2026-07-21 11:12:50.838797862 -0300 home-manager-1-link -> /nix/store/pkakas991185ggnxv53l03kp5cqarag9-home-manager-generation
+lrwxrwxrwx - user 2026-07-24 10:03:34.218384811 -0300 home-manager-2-link -> /nix/store/11mczqbp4i272lzlw7f8wvzh1xm1lkjx-home-manager-generation
+lrwxrwxrwx - user 2026-07-30 13:28:16.717981066 -0300 home-manager-3-link -> /nix/store/cmyy1j43k61ji0xa593b37mihrpjn9iq-home-manager-generation
+lrwxrwxrwx - user 2026-09-03 21:46:27.822317347 -0300 home-manager-4-link -> /nix/store/y9l76kk63s49hhgfdya4j95mb6hgvd1z-home-manager-generation
+lrwxrwxrwx - user 2026-09-03 21:50:29.415609611 -0300 home-manager-5-link -> /nix/store/igga7ziwc6ng3hl8aw9rw3frfac4qrmx-home-manager-generation
+lrwxrwxrwx - user 2026-03-26 09:26:09.860919679 -0300 profile -> profile-3-link
+lrwxrwxrwx - user 2026-03-26 09:26:09.860351331 -0300 profile-3-link -> /nix/store/pkniwi5f0fsjzrrxci4fzvy92yn69y4g-user-environment

@@ -1,0 +1,6 @@
+lrwxrwxrwx - root 2026-03-02 10:28:26.273002785 -0300 default -> /nix/var/nix/profiles/per-user/root/profile
+drwxr-xr-x - root 2026-02-24 13:57:08.663598509 -0300 per-user
+lrwxrwxrwx - root 2026-10-24 12:47:39.315319854 -0300 system -> system-446-link
+lrwxrwxrwx - root 2026-10-20 20:13:22.394802496 -0300 system-444-link -> /nix/store/4kzs1vll4m7fj7nk24mfaby84y5810yf-nixos-system-nixos-26.11.20261015.fe13242
+lrwxrwxrwx - root 2026-10-24 02:10:10.710782286 -0300 system-445-link -> /nix/store/xp5d8i6b9kql6n7dd7spksr7by524l01-nixos-system-nixos-26.11.20261020.02c087f
+lrwxrwxrwx - root 2026-10-24 12:47:39.315319854 -0300 system-446-link -> /nix/store/ild1z1rj4mmi4nkv41l6drgsy9gn39cc-nixos-system-nixos-26.11.20261020.02c087f

@@ -1,0 +1,13 @@
+org.freedesktop.Platform	24.08	691.3 MB	system
+org.freedesktop.Platform	25.08	670.7 MB	system
+org.freedesktop.Platform.GL.default	24.08	464.6 MB	system
+org.freedesktop.Platform.GL.default	24.08extra	464.7 MB	system
+org.freedesktop.Platform.GL.default	25.08	462.3 MB	system
+org.freedesktop.Platform.GL.default	25.08-extra	462.3 MB	system
+org.freedesktop.Platform.VAAPI.Intel	24.08	54.4 MB	system
+org.freedesktop.Platform.VAAPI.Intel	25.08	46.3 MB	system
+org.freedesktop.Platform.codecs-extra	25.08-extra	43.4 MB	system
+org.freedesktop.Platform.openh264	2.5.1	789.5 kB	system
+org.gnome.Platform	49	1.1 GB	system
+org.gnome.Platform	50	1.1 GB	system
+org.gtk.Gtk3theme.adw-gtk3-dark	3.22	692.7 kB	system
