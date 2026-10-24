@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zelador 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 18:50-0300\n"
+"POT-Creation-Date: 2026-10-24 19:59-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -419,13 +419,13 @@ msgid ""
 msgstr ""
 
 #: crates/gtk/src/screens/atualizar.rs crates/gtk/src/screens/liberar.rs
-msgid "O pkexec com setuid não está habilitado neste sistema."
+msgid "O serviço do helper não está ativo neste sistema."
 msgstr ""
 
 #: crates/gtk/src/screens/atualizar.rs
 msgid ""
-"Você pode construir e revisar a atualização, mas só consegue aplicá-la com "
-"security.polkit.enablePkexecWrapper ativo."
+"Você pode construir e revisar a atualização, mas só consegue aplicá-la com o "
+"zelador-helper.socket ativo (programs.zelador.enable)."
 msgstr ""
 
 #: crates/gtk/src/screens/atualizar.rs
@@ -840,7 +840,7 @@ msgid "Opções da geração"
 msgstr ""
 
 #: crates/gtk/src/screens/geracoes.rs
-msgid "O pkexec com setuid não está habilitado neste sistema"
+msgid "O serviço do helper não está ativo neste sistema"
 msgstr ""
 
 #: crates/gtk/src/screens/geracoes.rs
@@ -975,7 +975,7 @@ msgid "Runtimes Flatpak sem uso"
 msgstr ""
 
 #: crates/gtk/src/screens/liberar.rs
-msgid "serão liberados"
+msgid "podem ser liberados"
 msgstr ""
 
 #: crates/gtk/src/screens/liberar.rs
@@ -994,7 +994,7 @@ msgstr ""
 
 #: crates/gtk/src/screens/liberar.rs
 msgid ""
-"Ative security.polkit.enablePkexecWrapper (o módulo do Zelador faz isso). "
+"Ative programs.zelador.enable (ele liga o zelador-helper.socket no systemd). "
 "Simular continua disponível."
 msgstr ""
 
@@ -1028,11 +1028,13 @@ msgstr ""
 
 #: crates/gtk/src/screens/liberar.rs
 msgid ""
-"Também serão removidos {0} de caminhos sem referência, na coleta de lixo."
+"Também podem sair até {0} de caminhos sem referência, na coleta de lixo. O "
+"valor real costuma ser menor: o Nix compartilha arquivos idênticos entre "
+"caminhos."
 msgstr ""
 
 #: crates/gtk/src/screens/liberar.rs
-msgid "Cerca de"
+msgid "Até"
 msgstr ""
 
 #: crates/gtk/src/screens/liberar.rs
@@ -1080,7 +1082,7 @@ msgid "• A coleta de lixo apagaria hoje {0} caminhos (simulação do Nix)."
 msgstr ""
 
 #: crates/gtk/src/screens/liberar.rs
-msgid "Estimativa total: {0}."
+msgid "Estimativa total (limite superior): {0}."
 msgstr ""
 
 #: crates/gtk/src/screens/liberar.rs
@@ -1268,7 +1270,7 @@ msgid "{0} no /nix/store"
 msgstr ""
 
 #: crates/gtk/src/screens/seu_sistema.rs
-msgid "Cerca de {0} podem ser liberados"
+msgid "Até {0} podem ser liberados"
 msgstr ""
 
 #: crates/gtk/src/screens/seu_sistema.rs

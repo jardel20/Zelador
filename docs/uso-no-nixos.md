@@ -9,11 +9,11 @@ sistema, você ativa o módulo por conta própria, colando o trecho abaixo no se
 - instala a *action* do polkit `br.dev.zelador.helper`, que aponta para o helper no store e
   **exige senha de administrador a cada operação**;
 - instala as fontes Poppins e JetBrains Mono;
-- liga `security.polkit.enablePkexecWrapper`, que torna o `pkexec` **setuid no sistema inteiro**.
-  O NixOS deixa isso desligado por padrão. O helper depende dele: sem o `pkexec` setuid o app
-  continua abrindo e simulando, mas não consegue aplicar nada. Se preferir não ligar, use
-  `security.polkit.enablePkexecWrapper = lib.mkForce false;` e aceite que as ações
-  privilegiadas ficam indisponíveis.
+- liga o `zelador-helper.socket` no systemd. O app **não tem privilégio nenhum**: ele conversa
+  com esse socket (`/run/zelador/helper.sock`), o systemd inicia o helper como root para cada
+  pedido, e o helper pergunta ao polkit antes de executar. **Não há setuid**: o `pkexec` não é
+  usado nem precisa ser habilitado. É preciso haver um agente de autenticação do polkit na sua
+  sessão (o mesmo que abre a janela de senha em qualquer app gráfico).
 
 ## Trecho para o `flake.nix` do seu sistema
 
@@ -42,8 +42,8 @@ usa `specialArgs`/`inputs`, basta acrescentar `zelador` à lista de módulos.
 
 ## Como desfazer
 
-Remova as duas linhas do módulo e o input, e aplique de novo. O `pkexec` volta a não ser
-setuid. Nada do Zelador fica no seu `/etc/nixos`.
+Remova as duas linhas do módulo e o input, e aplique de novo. O socket e o serviço somem.
+Nada do Zelador fica no seu `/etc/nixos`.
 
 ## Verificar
 

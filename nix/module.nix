@@ -72,8 +72,9 @@ in
       default = pkgs.callPackage ./helper.nix { nix = config.nix.package; };
       defaultText = lib.literalExpression "pkgs.callPackage ./helper.nix { nix = config.nix.package; }";
       description = ''
-        Helper privilegiado chamado via pkexec. A action do polkit aponta para o caminho
-        dele no store e exige senha de administrador a cada operação.
+        Helper privilegiado, iniciado como root pelo systemd a cada conexão ao socket
+        `zelador-helper.socket`. O helper confere a action do polkit, que exige senha de
+        administrador a cada operação. Não há setuid.
       '';
     };
   };
@@ -115,9 +116,35 @@ in
     };
 
     security.polkit.enable = true;
-    # No nixpkgs atual o pkexec setuid é opcional e vem desligado; sem ele, o app não
-    # consegue chamar o helper. O app usa /run/wrappers/bin/pkexec, nunca o do PATH.
-    security.polkit.enablePkexecWrapper = lib.mkDefault true;
+
+    # O app não tem privilégio nenhum: ele conversa com este socket (sem setuid). O systemd
+    # inicia um `zelador-helper --serve` como root por conexão; o helper descobre quem
+    # conectou pelo kernel, valida o pedido e pergunta ao polkit antes de executar.
+    systemd.sockets.zelador-helper = {
+      description = "Zelador: socket do helper privilegiado";
+      wantedBy = [ "sockets.target" ];
+      socketConfig = {
+        ListenStream = "/run/zelador/helper.sock";
+        Accept = true;
+        DirectoryMode = "0755";
+        # Qualquer usuário local pode conectar; cada pedido ainda passa pelo polkit.
+        SocketMode = "0666";
+        MaxConnections = 16;
+        MaxConnectionsPerSource = 4;
+      };
+    };
+    systemd.services."zelador-helper@" = {
+      description = "Zelador: helper privilegiado";
+      # Trocar o sistema não deve derrubar uma operação em andamento.
+      stopIfChanged = false;
+      restartIfChanged = false;
+      serviceConfig = {
+        ExecStart = "${cfg.helperPackage}/bin/zelador-helper --serve";
+        StandardInput = "socket";
+        StandardOutput = "socket";
+        StandardError = "socket";
+      };
+    };
     environment.systemPackages = [
       cfg.package
       cfg.cliPackage

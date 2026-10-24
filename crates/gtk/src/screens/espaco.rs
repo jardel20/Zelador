@@ -236,7 +236,11 @@ impl View {
             home_manager: &sets.home_manager,
             old_generations: &sets.old_generations,
             forgotten_roots: &sets.forgotten_roots,
-        });
+        })
+        .scaled(zelador_core::cleanup::disk_ratio(
+            sizes,
+            zelador_core::disk::used_bytes(std::path::Path::new("/nix")).unwrap_or(u64::MAX),
+        ));
         self.totals.borrow_mut().space = Some(result);
 
         let parts = [

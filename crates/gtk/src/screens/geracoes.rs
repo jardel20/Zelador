@@ -451,7 +451,7 @@ fn options_menu(ui: &Rc<Ui>, generation: &Generation) -> gtk::MenuButton {
 
 fn helper_issue_text(issue: HelperIssue) -> String {
     match issue {
-        HelperIssue::PkexecMissing => tr("O pkexec com setuid não está habilitado neste sistema"),
+        HelperIssue::SocketMissing => tr("O serviço do helper não está ativo neste sistema"),
         HelperIssue::HelperMissing | HelperIssue::PolicyMissing => {
             tr("O helper privilegiado não está instalado neste sistema")
         }

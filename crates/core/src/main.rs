@@ -290,7 +290,11 @@ fn print_space(
         home_manager: &sets.home_manager,
         old_generations: &sets.old_generations,
         forgotten_roots: &sets.forgotten_roots,
-    });
+    })
+    .scaled(zelador_core::cleanup::disk_ratio(
+        &sizes,
+        zelador_core::disk::used_bytes(std::path::Path::new("/nix")).unwrap_or(u64::MAX),
+    ));
     println!("Total {}", format_bytes(result.total));
     println!("Em uso {}", format_bytes(result.in_use()));
     println!("  Sistema {}", format_bytes(result.system));
@@ -700,7 +704,15 @@ fn run_check(env: &StatusEnv, nix: &CliNix<SystemRunner>, args: &CheckArgs) -> a
     let free = free_bytes(std::path::Path::new("/nix")).ok();
     // `--print-dead` leva alguns segundos: só roda se o limiar estiver ligado.
     let reclaimable = if args.config.reclaimable_bytes > 0 {
-        status::gc_estimate(nix).ok().map(|estimate| estimate.bytes)
+        let ratio = zelador_core::backends::NixBackend::store_total_bytes(nix)
+            .ok()
+            .zip(zelador_core::disk::used_bytes(std::path::Path::new("/nix")).ok())
+            .map_or(1.0, |(total, used)| {
+                zelador_core::disk::real_ratio(total, used)
+            });
+        status::gc_estimate(nix)
+            .ok()
+            .map(|estimate| zelador_core::disk::scale_bytes(estimate.bytes, ratio))
     } else {
         None
     };

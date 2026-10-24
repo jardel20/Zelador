@@ -245,7 +245,18 @@ pub fn collect(
     let mut warnings = Warnings(std::mem::take(&mut status.warnings));
     let total = warnings.keep("tamanho do store", nix.store_total_bytes());
     let gc = warnings.keep("estimativa de limpeza", gc_estimate(nix));
-    status.store = total.map(|total_bytes| StoreStatus { total_bytes, gc });
+    // O `narSize` soma o conteúdo lógico e pode passar do disco (hardlinks do `optimise`).
+    let ratio = crate::disk::used_bytes(std::path::Path::new("/nix"))
+        .ok()
+        .zip(total)
+        .map_or(1.0, |(used, total)| crate::disk::real_ratio(total, used));
+    status.store = total.map(|total_bytes| StoreStatus {
+        total_bytes: crate::disk::scale_bytes(total_bytes, ratio),
+        gc: gc.map(|gc| GcEstimate {
+            bytes: crate::disk::scale_bytes(gc.bytes, ratio),
+            ..gc
+        }),
+    });
     status.warnings = warnings.0;
     status
 }

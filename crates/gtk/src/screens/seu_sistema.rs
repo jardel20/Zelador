@@ -313,9 +313,17 @@ fn show_space(
         (Ok(sizes), Ok(dead)) => {
             let total: u64 = sizes.values().sum();
             let reclaimable: u64 = dead.iter().filter_map(|path| sizes.get(path)).sum();
+            let ratio = zelador_core::disk::real_ratio(
+                total,
+                zelador_core::disk::used_bytes(std::path::Path::new("/nix")).unwrap_or(u64::MAX),
+            );
+            let (total, reclaimable) = (
+                zelador_core::disk::scale_bytes(total, ratio),
+                zelador_core::disk::scale_bytes(reclaimable, ratio),
+            );
             row.set_title(&trf("{0} no /nix/store", &[format_bytes(total)]));
             row.set_subtitle(&trf(
-                "Cerca de {0} podem ser liberados",
+                "Até {0} podem ser liberados",
                 &[format_bytes(reclaimable)],
             ));
             let button = gtk::Button::builder()

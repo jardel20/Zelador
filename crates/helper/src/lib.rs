@@ -1,4 +1,4 @@
-//! Helper privilegiado do Zelador, chamado via `pkexec`.
+//! Helper privilegiado do Zelador, ativado pelo systemd por socket (sem setuid).
 //!
 //! A biblioteca separa três etapas, para que a validação seja testável sem root:
 //! 1. [`request::parse_args`] transforma o `argv` em um [`request::Request`] (só sintaxe);
@@ -14,5 +14,6 @@ pub mod lock;
 pub mod plan;
 pub mod request;
 pub mod roots;
+pub mod serve;
 
 pub use error::Rejection;

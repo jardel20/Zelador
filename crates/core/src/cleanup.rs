@@ -263,6 +263,18 @@ pub struct Estimate {
 }
 
 impl Estimate {
+    /// Converte o tamanho lógico (soma dos `narSize`) em uma estimativa do que sai do disco.
+    /// O Flatpak já vem em bytes reais e não muda.
+    pub fn scaled(self, ratio: f64) -> Self {
+        let scale = |bytes: u64| crate::disk::scale_bytes(bytes, ratio);
+        Self {
+            generations: scale(self.generations),
+            links: scale(self.links),
+            unreferenced: scale(self.unreferenced),
+            flatpak: self.flatpak,
+        }
+    }
+
     pub fn total(&self) -> u64 {
         self.generations + self.links + self.unreferenced + self.flatpak
     }
@@ -317,6 +329,12 @@ pub fn estimate(
     }
 }
 
+/// Razão entre o disco ocupado e o tamanho lógico de todos os caminhos do store
+/// (ver [`crate::disk::real_ratio`]).
+pub fn disk_ratio(sizes: &HashMap<String, u64>, used_bytes: u64) -> f64 {
+    crate::disk::real_ratio(sizes.values().sum(), used_bytes)
+}
+
 /// Quanto cada link esquecido libera sozinho (fecho dele menos o das demais raízes).
 pub fn link_sizes(index: &ClosureIndex, sizes: &HashMap<String, u64>) -> HashMap<PathBuf, u64> {
     let mut result: HashMap<PathBuf, u64> = HashMap::new();
@@ -364,24 +382,26 @@ pub fn dry_run(nix: &dyn NixBackend, plan: &CleanupPlan) -> Result<DryRun> {
 
 // ── Helper privilegiado ─────────────────────────────────────────────────────
 
-pub const PKEXEC_PATH: &str = "/run/wrappers/bin/pkexec";
+/// Socket em que o systemd escuta para o helper (`programs.zelador.enable`).
+pub const SOCKET_PATH: &str = "/run/zelador/helper.sock";
 pub const POLICY_PATH: &str =
     "/run/current-system/sw/share/polkit-1/actions/br.dev.zelador.helper.policy";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HelperIssue {
-    /// O `pkexec` setuid não existe (`security.polkit.enablePkexecWrapper`).
-    PkexecMissing,
+    /// O socket do helper não existe: o serviço do systemd não está ativo.
+    SocketMissing,
     HelperMissing,
     /// A action do polkit não está instalada (`programs.zelador.enable`).
     PolicyMissing,
 }
 
-/// Chama `zelador-helper` por `pkexec`, sempre com caminhos absolutos fixos.
+/// Chama `zelador-helper --call`, que conversa com o serviço do systemd (root, com polkit).
+/// Sempre por caminhos absolutos fixos.
 #[derive(Debug, Clone)]
 pub struct HelperClient<R> {
     runner: R,
-    pkexec: PathBuf,
+    socket: PathBuf,
     helper: PathBuf,
     policy: PathBuf,
 }
@@ -391,10 +411,10 @@ pub trait PrivilegedHelper {
 }
 
 impl<R> HelperClient<R> {
-    pub fn new(runner: R, pkexec: PathBuf, helper: PathBuf, policy: PathBuf) -> Self {
+    pub fn new(runner: R, socket: PathBuf, helper: PathBuf, policy: PathBuf) -> Self {
         Self {
             runner,
-            pkexec,
+            socket,
             helper,
             policy,
         }
@@ -406,15 +426,15 @@ impl<R> HelperClient<R> {
             option_env!("ZELADOR_HELPER").unwrap_or("/run/current-system/sw/bin/zelador-helper");
         Self::new(
             runner,
-            PKEXEC_PATH.into(),
+            SOCKET_PATH.into(),
             helper.into(),
             POLICY_PATH.into(),
         )
     }
 
     pub fn check(&self) -> std::result::Result<(), HelperIssue> {
-        if !self.pkexec.exists() {
-            Err(HelperIssue::PkexecMissing)
+        if !self.socket.exists() {
+            Err(HelperIssue::SocketMissing)
         } else if !self.helper.exists() {
             Err(HelperIssue::HelperMissing)
         } else if !self.policy.exists() {
@@ -426,10 +446,10 @@ impl<R> HelperClient<R> {
 }
 
 impl<R> HelperClient<R> {
-    /// `pkexec <helper> <args...>`, sem repassar o ambiente do usuário.
+    /// `<helper> --call <args...>`, sem repassar o ambiente do usuário.
     pub fn command(&self, args: &[String]) -> CommandSpec {
-        CommandSpec::new(self.pkexec.to_string_lossy())
-            .arg(self.helper.to_string_lossy())
+        CommandSpec::new(self.helper.to_string_lossy())
+            .arg("--call")
             .args(args.iter().cloned())
     }
 
@@ -460,7 +480,7 @@ pub enum StepKind {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Step {
     pub kind: StepKind,
-    /// Pede senha de administrador (um `pkexec` por passo).
+    /// Pede senha de administrador (uma autorização do polkit por passo).
     pub privileged: bool,
 }
 
@@ -950,28 +970,28 @@ mod tests {
             fs::write(&p, "").unwrap();
             p
         };
-        let (pkexec, helper, policy) = (file("pkexec"), file("helper"), file("policy"));
+        let (socket, helper, policy) = (file("socket"), file("helper"), file("policy"));
         let missing = dir.path().join("nada");
         let client = |p: &Path, h: &Path, a: &Path| {
             HelperClient::new(SystemRunner, p.into(), h.into(), a.into())
         };
-        assert_eq!(client(&pkexec, &helper, &policy).check(), Ok(()));
+        assert_eq!(client(&socket, &helper, &policy).check(), Ok(()));
         assert_eq!(
             client(&missing, &helper, &policy).check(),
-            Err(HelperIssue::PkexecMissing)
+            Err(HelperIssue::SocketMissing)
         );
         assert_eq!(
-            client(&pkexec, &missing, &policy).check(),
+            client(&socket, &missing, &policy).check(),
             Err(HelperIssue::HelperMissing)
         );
         assert_eq!(
-            client(&pkexec, &helper, &missing).check(),
+            client(&socket, &helper, &missing).check(),
             Err(HelperIssue::PolicyMissing)
         );
     }
 
     #[test]
-    fn cliente_do_helper_monta_pkexec_helper_e_argumentos() {
+    fn cliente_do_helper_monta_helper_call_e_argumentos() {
         use crate::runner::Output;
         struct Capture(RefCell<Vec<CommandSpec>>);
         impl CommandRunner for Capture {
@@ -987,7 +1007,7 @@ mod tests {
         let capture = Capture(RefCell::default());
         let client = HelperClient::new(
             &capture,
-            "/w/pkexec".into(),
+            "/w/socket".into(),
             "/s/helper".into(),
             "/p".into(),
         );
@@ -995,8 +1015,32 @@ mod tests {
             .run(&["delete-generations".into(), "4".into()])
             .unwrap();
         let spec = capture.0.borrow()[0].clone();
-        assert_eq!(spec.program, "/w/pkexec");
-        assert_eq!(spec.args, ["/s/helper", "delete-generations", "4"]);
+        assert_eq!(spec.program, "/s/helper");
+        assert_eq!(spec.args, ["--call", "delete-generations", "4"]);
         assert!(spec.env.is_empty(), "o ambiente do usuário não é repassado");
+    }
+
+    #[test]
+    fn razao_do_disco_so_reduz_quando_a_soma_logica_passa_do_disco() {
+        let sizes = HashMap::from([("a".to_owned(), 300), ("b".to_owned(), 100)]);
+        assert_eq!(disk_ratio(&sizes, 1000), 1.0);
+        assert_eq!(disk_ratio(&sizes, 200), 0.5);
+        assert_eq!(disk_ratio(&HashMap::new(), 200), 1.0);
+        let estimate = Estimate {
+            generations: 100,
+            links: 40,
+            unreferenced: 400,
+            flatpak: 9,
+        };
+        let scaled = estimate.scaled(0.5);
+        assert_eq!(
+            (
+                scaled.generations,
+                scaled.links,
+                scaled.unreferenced,
+                scaled.flatpak
+            ),
+            (50, 20, 200, 9)
+        );
     }
 }

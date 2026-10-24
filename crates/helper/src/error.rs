@@ -5,6 +5,8 @@ pub mod exit {
     pub const USAGE_OR_REJECTED: u8 = 65;
     pub const INTERNAL: u8 = 70;
     pub const BUSY: u8 = 75;
+    /// O polkit não autorizou (senha errada, diálogo fechado, sem agente).
+    pub const DENIED: u8 = 77;
 }
 
 /// Motivo pelo qual um pedido foi recusado antes de executar qualquer coisa.

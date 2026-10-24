@@ -223,7 +223,7 @@ mod tests {
         let log = "@zelador {\"step\":1,\"of\":2,\"program\":\"nix-env\"}\n@zelador {\"step\":2,\"of\":2,\"program\":\"systemd-run\"}\nNot checking switch inhibitors (action = boot)\nupdating GRUB 2 menu...\ninstalling the GRUB 2 boot loader on /dev/x...\n";
         let client = HelperClient::new(
             Replay(log),
-            PathBuf::from("/w/pkexec"),
+            PathBuf::from("/w/socket"),
             PathBuf::from("/s/helper"),
             PathBuf::from("/p"),
         );

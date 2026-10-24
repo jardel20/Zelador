@@ -12,27 +12,28 @@ pkgs.testers.runNixOSTest {
   testScript = { nodes, ... }: ''
     helper = "${nodes.machine.programs.zelador.helperPackage}/bin/zelador-helper"
 
-    # O pkexec com setuid é o do wrapper; o do store não tem o bit.
-    pkexec = "/run/wrappers/bin/pkexec"
-
     def as_user(user, cmd):
         return f"su - {user} -c '{cmd}'"
 
     machine.wait_for_unit("multi-user.target")
 
-    with subtest("a action do polkit está instalada e aponta para o helper"):
+    with subtest("o socket do systemd está ativo e não há pkexec setuid"):
+        machine.wait_for_unit("zelador-helper.socket")
+        machine.succeed("test -S /run/zelador/helper.sock")
+        machine.fail("test -e /run/wrappers/bin/pkexec")
+
+    with subtest("a action do polkit está instalada"):
         out = machine.succeed("pkaction --action-id br.dev.zelador.helper --verbose")
-        assert "org.freedesktop.policykit.exec.path -> " + helper in out, out
         assert "implicit active:   auth_admin" in out, out
         assert "implicit inactive: auth_admin" in out, out
 
     with subtest("usuário comum recusado pelo polkit"):
-        status, out = machine.execute(as_user("bob", f"{pkexec} {helper} gc 2>&1"))
-        assert status != 0, out
-        # Recusa por autorização (sem agente para pedir a senha), não por erro de ambiente.
-        assert "setuid" not in out and ("agent" in out or "uthoriz" in out), out
+        status, out = machine.execute(as_user("bob", f"{helper} --call gc 2>&1"))
+        # Código 77: o polkit não autorizou (sem agente para pedir a senha).
+        assert status == 77, (status, out)
+        assert "não autorizado" in out, out
 
-    with subtest("pedidos inválidos são recusados com código 65, via pkexec"):
+    with subtest("pedidos inválidos são recusados com código 65, pelo socket"):
         for bad in [
             "activate /etc test",
             "activate /nix/store/../etc test",
@@ -43,7 +44,7 @@ pkgs.testers.runNixOSTest {
             "rollback -1",
             "delete-generations",
         ]:
-            status, out = machine.execute(as_user("alice", f"{pkexec} {helper} {bad} 2>&1"))
+            status, out = machine.execute(as_user("alice", f"{helper} --call {bad} 2>&1"))
             assert status == 65, (bad, status, out)
 
     alt = machine.succeed("readlink -f /run/current-system/specialisation/alternativa").strip()
@@ -52,14 +53,14 @@ pkgs.testers.runNixOSTest {
 
     with subtest("activate test troca o sistema sem mexer no perfil"):
         before = machine.succeed("ls /nix/var/nix/profiles | grep -c 'system-.*-link' || true").strip()
-        machine.succeed(as_user("alice", f"{pkexec} {helper} activate {alt} test"))
+        machine.succeed(as_user("alice", f"{helper} --call activate {alt} test"))
         machine.succeed("test \"$(cat /etc/zelador-marcador)\" = alternativa")
         assert machine.succeed("readlink -f /run/current-system").strip() == alt
         after = machine.succeed("ls /nix/var/nix/profiles | grep -c 'system-.*-link' || true").strip()
         assert before == after, (before, after)
 
     with subtest("activate boot registra uma geração nova e o perfil aponta para ela"):
-        machine.succeed(as_user("alice", f"{pkexec} {helper} activate {original} boot"))
+        machine.succeed(as_user("alice", f"{helper} --call activate {original} boot"))
         profile = machine.succeed("readlink -f /nix/var/nix/profiles/system").strip()
         assert profile == original, profile
 
@@ -74,20 +75,20 @@ pkgs.testers.runNixOSTest {
         # Em `test` não há registro de geração: um passo só.
         out = machine.succeed(as_user("alice", f"zelador-core activate {alt} test 2>&1"))
         assert "etapa 1 de 1: systemd-run" in out and "etapa 2" not in out, out
-        machine.succeed(as_user("alice", f"{pkexec} {helper} activate {original} test"))
+        machine.succeed(as_user("alice", f"{helper} --call activate {original} test"))
 
     with subtest("delete-generations recusa a geração em uso e a padrão do boot"):
         gens = machine.succeed("ls /nix/var/nix/profiles | sed -n 's/^system-\\([0-9]*\\)-link$/\\1/p' | sort -n").split()
         boot_gen = [g for g in gens if machine.succeed(f"readlink -f /nix/var/nix/profiles/system-{g}-link").strip() == original][-1]
-        status, out = machine.execute(as_user("alice", f"{pkexec} {helper} delete-generations {boot_gen} 2>&1"))
+        status, out = machine.execute(as_user("alice", f"{helper} --call delete-generations {boot_gen} 2>&1"))
         assert status == 65, (status, out)
 
     with subtest("activate switch para a alternativa e rollback para a original"):
-        machine.succeed(as_user("alice", f"{pkexec} {helper} activate {alt} switch"))
+        machine.succeed(as_user("alice", f"{helper} --call activate {alt} switch"))
         machine.succeed("test \"$(cat /etc/zelador-marcador)\" = alternativa")
         gens = machine.succeed("ls /nix/var/nix/profiles | sed -n 's/^system-\\([0-9]*\\)-link$/\\1/p' | sort -n").split()
         orig_gen = [g for g in gens if machine.succeed(f"readlink -f /nix/var/nix/profiles/system-{g}-link").strip() == original][0]
-        machine.succeed(as_user("alice", f"{pkexec} {helper} rollback {orig_gen}"))
+        machine.succeed(as_user("alice", f"{helper} --call rollback {orig_gen}"))
         machine.succeed("test \"$(cat /etc/zelador-marcador)\" = original")
 
     with subtest("delete-generations remove uma geração antiga"):
@@ -97,25 +98,25 @@ pkgs.testers.runNixOSTest {
         assert old, gens
         entry = f"Configuration {old[0]} "
         assert entry in machine.succeed("cat /boot/grub/grub.cfg"), "geração antiga deveria estar no menu"
-        machine.succeed(as_user("alice", f"{pkexec} {helper} delete-generations {old[0]}"))
+        machine.succeed(as_user("alice", f"{helper} --call delete-generations {old[0]}"))
         machine.fail(f"test -e /nix/var/nix/profiles/system-{old[0]}-link")
         # O passo `boot` regenera o menu sem a entrada da geração apagada.
         assert entry not in machine.succeed("cat /boot/grub/grub.cfg"), "menu do boot não foi regenerado"
 
     with subtest("gc e optimise rodam"):
-        machine.succeed(as_user("alice", f"{pkexec} {helper} gc"))
+        machine.succeed(as_user("alice", f"{helper} --call gc"))
         # O store da VM é virtiofs e não aceita os hard links do --optimise ("Stale file
         # handle"). Aqui basta provar que o comando rodou e que o helper propagou a falha.
-        status, out = machine.execute(as_user("alice", f"{pkexec} {helper} optimise 2>&1"))
+        status, out = machine.execute(as_user("alice", f"{helper} --call optimise 2>&1"))
         assert status == 0 or ("Stale file handle" in out and "passo 1 terminou com código" in out), (status, out)
 
-    with subtest("zelador-core clean: simula sem alterar e executa pelo helper com pkexec"):
+    with subtest("zelador-core clean: simula sem alterar e executa pelo helper (socket + polkit)"):
         # Cria uma geração antiga (a alternativa) e devolve o boot para a original.
-        machine.succeed(as_user("alice", f"{pkexec} {helper} activate {alt} boot"))
+        machine.succeed(as_user("alice", f"{helper} --call activate {alt} boot"))
         gens = machine.succeed("ls /nix/var/nix/profiles | sed -n 's/^system-\\([0-9]*\\)-link$/\\1/p' | sort -n").split()
         orig_gen = [g for g in gens if machine.succeed(f"readlink -f /nix/var/nix/profiles/system-{g}-link").strip() == original][0]
         alt_gen = [g for g in gens if machine.succeed(f"readlink -f /nix/var/nix/profiles/system-{g}-link").strip() == alt][-1]
-        machine.succeed(as_user("alice", f"{pkexec} {helper} set-boot-default {orig_gen}"))
+        machine.succeed(as_user("alice", f"{helper} --call set-boot-default {orig_gen}"))
         machine.succeed(f"test -L /nix/var/nix/profiles/system-{alt_gen}-link")
 
         # Sem --execute: não pode apagar nada.
@@ -168,7 +169,7 @@ pkgs.testers.runNixOSTest {
         assert len(machine.succeed("cat /tmp/zelador-notify.log").splitlines()) == before
 
     with subtest("sem instalação Flatpak de sistema, flatpak-remove-unused é recusado"):
-        status, out = machine.execute(as_user("alice", f"{pkexec} {helper} flatpak-remove-unused 2>&1"))
+        status, out = machine.execute(as_user("alice", f"{helper} --call flatpak-remove-unused 2>&1"))
         assert status == 65, (status, out)
   '';
 }

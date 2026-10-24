@@ -15,9 +15,9 @@ use zelador_core::backends::CliFlatpak;
 use zelador_core::cleanup::{
     Cleaner, CleanupPlan, ClosureIndex, DEFAULT_KEEP_DAYS, DEFAULT_KEEP_HOME_MANAGER,
     DEFAULT_KEEP_SYSTEM, Estimate, HelperClient, HelperIssue, Policy, Selection, Step, StepKind,
-    build_plan, closure_index, dry_run, estimate, link_sizes,
+    build_plan, closure_index, disk_ratio, dry_run, estimate, link_sizes,
 };
-use zelador_core::disk::free_bytes;
+use zelador_core::disk::{free_bytes, used_bytes};
 use zelador_core::history::{NewOperation, OperationKind, Outcome};
 use zelador_core::runner::SystemRunner;
 use zelador_core::status::SystemStatus;
@@ -39,6 +39,8 @@ struct Data {
     sizes: Sizes,
     dead: Dead,
     link_sizes: HashMap<PathBuf, u64>,
+    /// Disco ocupado sobre tamanho lógico do store (ver `disk_ratio`).
+    ratio: f64,
 }
 
 struct Ui {
@@ -218,7 +220,7 @@ pub fn build(ctx: &Rc<Ctx>, intro: &gtk::Label, view: &adw::ToolbarView) -> Scre
     // Barra inferior.
     let total = gtk::Label::builder().css_classes(["strong"]).build();
     let total_hint = gtk::Label::builder()
-        .label(tr("serão liberados"))
+        .label(tr("podem ser liberados"))
         .css_classes(["caption-text"])
         .build();
     let simulate = gtk::Button::builder()
@@ -382,10 +384,10 @@ fn helper_banner(issue: HelperIssue) -> gtk::Box {
                 "Ative programs.zelador.enable no módulo NixOS para poder limpar. Simular continua disponível.",
             ),
         ),
-        HelperIssue::PkexecMissing => (
-            tr("O pkexec com setuid não está habilitado neste sistema."),
+        HelperIssue::SocketMissing => (
+            tr("O serviço do helper não está ativo neste sistema."),
             tr(
-                "Ative security.polkit.enablePkexecWrapper (o módulo do Zelador faz isso). Simular continua disponível.",
+                "Ative programs.zelador.enable (ele liga o zelador-helper.socket no systemd). Simular continua disponível.",
             ),
         ),
     };
@@ -453,12 +455,17 @@ impl Ui {
             return;
         };
         let per_link = link_sizes(&index, size_map);
+        let ratio = disk_ratio(
+            size_map,
+            used_bytes(std::path::Path::new("/nix")).unwrap_or(u64::MAX),
+        );
         *self.data.borrow_mut() = Some(Rc::new(Data {
             status: Rc::clone(status),
             index,
             sizes: Rc::clone(sizes),
             dead: Rc::clone(dead),
             link_sizes: per_link,
+            ratio,
         }));
         self.populate_links(status);
         self.populate_flatpak(status);
@@ -591,7 +598,7 @@ impl Ui {
             },
             self.ctx.env.now,
         );
-        let gens = estimate(&data.index, sizes, dead, &only_generations, 0);
+        let gens = estimate(&data.index, sizes, dead, &only_generations, 0).scaled(data.ratio);
         let (n_system, n_hm) = (
             only_generations.system_generations.len(),
             only_generations.home_manager_generations.len(),
@@ -613,7 +620,8 @@ impl Ui {
             .iter()
             .filter_map(|path| data.link_sizes.get(path))
             .sum();
-        self.links_size.set_label(&format_bytes(selected_links));
+        self.links_size
+            .set_label(&format_bytes((selected_links as f64 * data.ratio) as u64));
 
         set_on(&self.generations_card, self.generations_on.get());
         set_on(&self.links_card, !self.links_on.borrow().is_empty());
@@ -621,20 +629,18 @@ impl Ui {
         set_on(&self.flatpak_card, self.flatpak_on.get());
 
         let plan = self.plan(&data);
-        let total: Estimate = estimate(&data.index, sizes, dead, &plan, flatpak_bytes);
+        let total: Estimate =
+            estimate(&data.index, sizes, dead, &plan, flatpak_bytes).scaled(data.ratio);
         if plan.runs_gc() {
             self.unreferenced.set_label(&trf(
-                "Também serão removidos {0} de caminhos sem referência, na coleta de lixo.",
+                "Também podem sair até {0} de caminhos sem referência, na coleta de lixo. O valor real costuma ser menor: o Nix compartilha arquivos idênticos entre caminhos.",
                 &[format_bytes(total.unreferenced)],
             ));
         } else {
             self.unreferenced.set_label("");
         }
-        self.total.set_label(&format!(
-            "{} {}",
-            tr("Cerca de"),
-            format_bytes(total.total())
-        ));
+        self.total
+            .set_label(&format!("{} {}", tr("Até"), format_bytes(total.total())));
         self.clean
             .set_sensitive(!plan.is_empty() && self.helper_issue.is_none());
         self.simulate.set_sensitive(!plan.is_empty());
@@ -735,9 +741,10 @@ fn describe_plan(
             dead,
             plan,
             data.status.flatpak.as_ref().map_or(0, |f| f.unused_bytes),
-        );
+        )
+        .scaled(data.ratio);
         lines.push(trf(
-            "Estimativa total: {0}.",
+            "Estimativa total (limite superior): {0}.",
             &[format_bytes(total.total())],
         ));
     }

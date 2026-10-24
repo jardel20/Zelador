@@ -4,6 +4,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zelador 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-24 19:59-0300\n"
+"PO-Revision-Date: 2026-10-24 00:00+0000\n"
+"Last-Translator: Claude (não revisado)\n"
+"Language-Team: en\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -199,18 +203,24 @@ msgstr "Gathering information about your configuration."
 
 #: crates/gtk/src/pages.rs crates/gtk/src/screens/atualizar.rs
 msgid "O build terminou sem erros. Nada mudou no sistema ainda."
-msgstr "The build finished without errors. Nothing has changed on the system yet."
+msgstr ""
+"The build finished without errors. Nothing has changed on the system yet."
 
 #: crates/gtk/src/pages.rs crates/gtk/src/screens/aplicando.rs
 msgid "Você pode continuar usando o computador. Não desligue até terminar."
 msgstr "You can keep using the computer. Do not shut down until it finishes."
 
 #: crates/gtk/src/pages.rs
-msgid "Cada configuração aplicada se torna uma geração. É possível voltar a qualquer uma delas."
-msgstr "Each applied configuration becomes a generation. You can go back to any of them."
+msgid ""
+"Cada configuração aplicada se torna uma geração. É possível voltar a "
+"qualquer uma delas."
+msgstr ""
+"Each applied configuration becomes a generation. You can go back to any of "
+"them."
 
 #: crates/gtk/src/pages.rs
-msgid "Escolha o que remover. Use Simular para ver o resultado antes de apagar."
+msgid ""
+"Escolha o que remover. Use Simular para ver o resultado antes de apagar."
 msgstr "Choose what to remove. Use Simulate to see the result before deleting."
 
 #: crates/gtk/src/pages.rs
@@ -338,8 +348,12 @@ msgid "Lendo os inputs do flake…"
 msgstr "Reading the flake inputs…"
 
 #: crates/gtk/src/screens/atualizar.rs
-msgid "O seu flake.lock só muda se você aplicar a atualização. Inputs fixados numa revisão não são atualizados."
-msgstr "Your flake.lock only changes if you apply the update. Inputs pinned to a revision are not updated."
+msgid ""
+"O seu flake.lock só muda se você aplicar a atualização. Inputs fixados numa "
+"revisão não são atualizados."
+msgstr ""
+"Your flake.lock only changes if you apply the update. Inputs pinned to a "
+"revision are not updated."
 
 #: crates/gtk/src/screens/atualizar.rs
 msgid "Atualizar o lock dos inputs"
@@ -374,8 +388,11 @@ msgid "Agora"
 msgstr "Now"
 
 #: crates/gtk/src/screens/atualizar.rs
-msgid "Troca os serviços em execução. Alguns programas abertos podem precisar ser reiniciados."
-msgstr "Switches the running services. Some open programs may need to be restarted."
+msgid ""
+"Troca os serviços em execução. Alguns programas abertos podem precisar ser "
+"reiniciados."
+msgstr ""
+"Switches the running services. Some open programs may need to be restarted."
 
 #: crates/gtk/src/screens/atualizar.rs
 msgid "Só até reiniciar"
@@ -398,16 +415,20 @@ msgid "O helper privilegiado não está instalado neste sistema."
 msgstr "The privileged helper is not installed on this system."
 
 #: crates/gtk/src/screens/atualizar.rs
-msgid "Você pode construir e revisar a atualização, mas só consegue aplicá-la depois de ativar programs.zelador.enable."
-msgstr "You can build and review the update, but you can only apply it after enabling programs.zelador.enable."
+msgid ""
+"Você pode construir e revisar a atualização, mas só consegue aplicá-la "
+"depois de ativar programs.zelador.enable."
+msgstr ""
+"You can build and review the update, but you can only apply it after "
+"enabling programs.zelador.enable."
 
 #: crates/gtk/src/screens/atualizar.rs crates/gtk/src/screens/liberar.rs
-msgid "O pkexec com setuid não está habilitado neste sistema."
-msgstr "The setuid pkexec is not enabled on this system."
+msgid "O serviço do helper não está ativo neste sistema."
+msgstr "The helper service is not active on this system."
 
 #: crates/gtk/src/screens/atualizar.rs
-msgid "Você pode construir e revisar a atualização, mas só consegue aplicá-la com security.polkit.enablePkexecWrapper ativo."
-msgstr "You can build and review the update, but you can only apply it with security.polkit.enablePkexecWrapper enabled."
+msgid "Você pode construir e revisar a atualização, mas só consegue aplicá-la com o zelador-helper.socket ativo (programs.zelador.enable)."
+msgstr "You can build and review the update, but you can only apply it with zelador-helper.socket active (programs.zelador.enable)."
 
 #: crates/gtk/src/screens/atualizar.rs
 msgid "Atualização · etapa"
@@ -419,15 +440,20 @@ msgstr "What to update?"
 
 #: crates/gtk/src/screens/atualizar.rs
 msgid "Escolha os inputs do flake. Nada muda no sistema até você aplicar."
-msgstr "Choose the flake inputs. Nothing changes on the system until you apply."
+msgstr ""
+"Choose the flake inputs. Nothing changes on the system until you apply."
 
 #: crates/gtk/src/screens/atualizar.rs
 msgid "Construindo a atualização"
 msgstr "Building the update"
 
 #: crates/gtk/src/screens/atualizar.rs
-msgid "Você pode continuar usando o computador. Nada muda no sistema até você aplicar."
-msgstr "You can keep using the computer. Nothing changes on the system until you apply."
+msgid ""
+"Você pode continuar usando o computador. Nada muda no sistema até você "
+"aplicar."
+msgstr ""
+"You can keep using the computer. Nothing changes on the system until you "
+"apply."
 
 #: crates/gtk/src/screens/atualizar.rs
 msgid "A atualização não pôde ser construída"
@@ -479,8 +505,12 @@ msgid "Fixar numa revisão:"
 msgstr "Pin to a revision:"
 
 #: crates/gtk/src/screens/atualizar.rs
-msgid "Cole a revisão completa (40 caracteres). O input fica nela e não é atualizado."
-msgstr "Paste the full revision (40 characters). The input stays on it and is not updated."
+msgid ""
+"Cole a revisão completa (40 caracteres). O input fica nela e não é "
+"atualizado."
+msgstr ""
+"Paste the full revision (40 characters). The input stays on it and is not "
+"updated."
 
 #: crates/gtk/src/screens/atualizar.rs
 msgid "Fixar"
@@ -567,7 +597,8 @@ msgid "O disco encheu durante o build. Libere espaço e tente de novo."
 msgstr "The disk filled up during the build. Free up space and try again."
 
 #: crates/gtk/src/screens/atualizar.rs
-msgid "Não foi possível baixar de um cache. Verifique a conexão e tente de novo."
+msgid ""
+"Não foi possível baixar de um cache. Verifique a conexão e tente de novo."
 msgstr "Could not download from a cache. Check your connection and try again."
 
 #: crates/gtk/src/screens/atualizar.rs
@@ -623,8 +654,10 @@ msgid "o sistema vai ocupar {0} a menos"
 msgstr "the system will take up {0} less"
 
 #: crates/gtk/src/screens/atualizar.rs
-msgid "Recomendado agora: o kernel mudou e só passa a valer depois de reiniciar."
-msgstr "Recommended now: the kernel changed and only takes effect after a reboot."
+msgid ""
+"Recomendado agora: o kernel mudou e só passa a valer depois de reiniciar."
+msgstr ""
+"Recommended now: the kernel changed and only takes effect after a reboot."
 
 #: crates/gtk/src/screens/atualizar.rs
 msgid "O sistema passa a usar a atualização ao reiniciar. Nada muda agora."
@@ -636,7 +669,8 @@ msgstr "For testing. After a reboot, the system goes back to generation"
 
 #: crates/gtk/src/screens/atualizar.rs
 msgid "Para testar. Ao reiniciar, o sistema volta para a geração atual."
-msgstr "For testing. After a reboot, the system goes back to the current generation."
+msgstr ""
+"For testing. After a reboot, the system goes back to the current generation."
 
 #: crates/gtk/src/screens/atualizar.rs
 msgid "Mudanças da atualização"
@@ -815,16 +849,22 @@ msgid "Opções da geração"
 msgstr "Generation options"
 
 #: crates/gtk/src/screens/geracoes.rs
-msgid "O pkexec com setuid não está habilitado neste sistema"
-msgstr "The setuid pkexec is not enabled on this system"
+msgid "O serviço do helper não está ativo neste sistema"
+msgstr "The helper service is not active on this system"
 
 #: crates/gtk/src/screens/geracoes.rs
 msgid "Voltar para a geração"
 msgstr "Go back to generation"
 
 #: crates/gtk/src/screens/geracoes.rs
-msgid "O sistema passa a usar esta geração agora e ela vira o padrão no boot. Serviços podem reiniciar e programas abertos podem precisar ser reiniciados. Será pedida a senha de administrador."
-msgstr "The system will use this generation now and it becomes the boot default. Services may restart and open programs may need to be restarted. The administrator password will be requested."
+msgid ""
+"O sistema passa a usar esta geração agora e ela vira o padrão no boot. "
+"Serviços podem reiniciar e programas abertos podem precisar ser reiniciados. "
+"Será pedida a senha de administrador."
+msgstr ""
+"The system will use this generation now and it becomes the boot default. "
+"Services may restart and open programs may need to be restarted. The "
+"administrator password will be requested."
 
 #: crates/gtk/src/screens/geracoes.rs
 msgid "Voltou para a geração"
@@ -839,8 +879,12 @@ msgid "o padrão no boot?"
 msgstr "the boot default?"
 
 #: crates/gtk/src/screens/geracoes.rs
-msgid "No próximo reinício o sistema inicia nesta geração. Nada muda agora. Será pedida a senha de administrador."
-msgstr "At the next reboot the system starts on this generation. Nothing changes now. The administrator password will be requested."
+msgid ""
+"No próximo reinício o sistema inicia nesta geração. Nada muda agora. Será "
+"pedida a senha de administrador."
+msgstr ""
+"At the next reboot the system starts on this generation. Nothing changes "
+"now. The administrator password will be requested."
 
 #: crates/gtk/src/screens/geracoes.rs
 msgid "Tornar padrão"
@@ -867,8 +911,12 @@ msgid "Gerações:"
 msgstr "Generations:"
 
 #: crates/gtk/src/screens/geracoes.rs
-msgid "Os arquivos só saem do disco na próxima limpeza (coleta de lixo). Não dá para desfazer."
-msgstr "The files only leave the disk at the next cleanup (garbage collection). This cannot be undone."
+msgid ""
+"Os arquivos só saem do disco na próxima limpeza (coleta de lixo). Não dá "
+"para desfazer."
+msgstr ""
+"The files only leave the disk at the next cleanup (garbage collection). This "
+"cannot be undone."
 
 #: crates/gtk/src/screens/geracoes.rs
 msgid "Geração excluída"
@@ -943,8 +991,8 @@ msgid "Runtimes Flatpak sem uso"
 msgstr "Unused Flatpak runtimes"
 
 #: crates/gtk/src/screens/liberar.rs
-msgid "serão liberados"
-msgstr "will be freed"
+msgid "podem ser liberados"
+msgstr "can be freed"
 
 #: crates/gtk/src/screens/liberar.rs
 msgid "Simular"
@@ -955,12 +1003,16 @@ msgid "Limpar"
 msgstr "Clean up"
 
 #: crates/gtk/src/screens/liberar.rs
-msgid "Ative programs.zelador.enable no módulo NixOS para poder limpar. Simular continua disponível."
-msgstr "Enable programs.zelador.enable in the NixOS module to be able to clean up. Simulate remains available."
+msgid ""
+"Ative programs.zelador.enable no módulo NixOS para poder limpar. Simular "
+"continua disponível."
+msgstr ""
+"Enable programs.zelador.enable in the NixOS module to be able to clean up. "
+"Simulate remains available."
 
 #: crates/gtk/src/screens/liberar.rs
-msgid "Ative security.polkit.enablePkexecWrapper (o módulo do Zelador faz isso). Simular continua disponível."
-msgstr "Enable security.polkit.enablePkexecWrapper (the Zelador module does this). Simulate remains available."
+msgid "Ative programs.zelador.enable (ele liga o zelador-helper.socket no systemd). Simular continua disponível."
+msgstr "Enable programs.zelador.enable (it turns on zelador-helper.socket in systemd). Simulate remains available."
 
 #: crates/gtk/src/screens/liberar.rs
 msgid "Calculando…"
@@ -991,12 +1043,12 @@ msgid "Saem {0} do sistema e {1} do Home Manager."
 msgstr "{0} system and {1} Home Manager generations would go."
 
 #: crates/gtk/src/screens/liberar.rs
-msgid "Também serão removidos {0} de caminhos sem referência, na coleta de lixo."
-msgstr "Also {0} of unreferenced paths will be removed in the garbage collection."
+msgid "Também podem sair até {0} de caminhos sem referência, na coleta de lixo. O valor real costuma ser menor: o Nix compartilha arquivos idênticos entre caminhos."
+msgstr "Up to {0} of unreferenced paths may also go in the garbage collection. The real value is usually lower: Nix shares identical files between paths."
 
 #: crates/gtk/src/screens/liberar.rs
-msgid "Cerca de"
-msgstr "About"
+msgid "Até"
+msgstr "Up to"
 
 #: crates/gtk/src/screens/liberar.rs
 msgid "Simulando…"
@@ -1043,11 +1095,12 @@ msgid "• A coleta de lixo apagaria hoje {0} caminhos (simulação do Nix)."
 msgstr "• Garbage collection would delete {0} paths today (Nix simulation)."
 
 #: crates/gtk/src/screens/liberar.rs
-msgid "Estimativa total: {0}."
-msgstr "Total estimate: {0}."
+msgid "Estimativa total (limite superior): {0}."
+msgstr "Total estimate (upper bound): {0}."
 
 #: crates/gtk/src/screens/liberar.rs
-msgid "Esta limpeza apaga gerações e arquivos do store e não pode ser desfeita."
+msgid ""
+"Esta limpeza apaga gerações e arquivos do store e não pode ser desfeita."
 msgstr "This cleanup deletes generations and store files and cannot be undone."
 
 #: crates/gtk/src/screens/liberar.rs
@@ -1055,8 +1108,10 @@ msgid "Nenhuma senha de administrador será pedida."
 msgstr "No administrator password will be requested."
 
 #: crates/gtk/src/screens/liberar.rs
-msgid "Será pedida a senha de administrador uma vez, para a etapa privilegiada."
-msgstr "The administrator password will be requested once, for the privileged step."
+msgid ""
+"Será pedida a senha de administrador uma vez, para a etapa privilegiada."
+msgstr ""
+"The administrator password will be requested once, for the privileged step."
 
 #: crates/gtk/src/screens/liberar.rs
 msgid "Limpar agora?"
@@ -1192,11 +1247,15 @@ msgstr "The generation in use was built with uncommitted changes"
 
 #: crates/gtk/src/screens/seu_sistema.rs
 msgid "A revisão da geração em uso não existe mais neste repositório"
-msgstr "The revision of the generation in use no longer exists in this repository"
+msgstr ""
+"The revision of the generation in use no longer exists in this repository"
 
 #: crates/gtk/src/screens/seu_sistema.rs
-msgid "{0}, então a contagem é aproximada (commits feitos depois da data da geração)."
-msgstr "{0}, so the count is approximate (commits made after the generation date)."
+msgid ""
+"{0}, então a contagem é aproximada (commits feitos depois da data da "
+"geração)."
+msgstr ""
+"{0}, so the count is approximate (commits made after the generation date)."
 
 #: crates/gtk/src/screens/seu_sistema.rs
 msgid "ativa"
@@ -1227,8 +1286,8 @@ msgid "{0} no /nix/store"
 msgstr "{0} in /nix/store"
 
 #: crates/gtk/src/screens/seu_sistema.rs
-msgid "Cerca de {0} podem ser liberados"
-msgstr "About {0} can be freed"
+msgid "Até {0} podem ser liberados"
+msgstr "Up to {0} can be freed"
 
 #: crates/gtk/src/screens/seu_sistema.rs
 msgid "Não foi possível calcular o tamanho do store"
@@ -1239,20 +1298,27 @@ msgid "Adicionar ao git"
 msgstr "Add to git"
 
 #: crates/gtk/src/screens/seu_sistema.rs
-msgid "1 arquivo novo está fora do git. O flake vai ignorá-lo no próximo build."
+msgid ""
+"1 arquivo novo está fora do git. O flake vai ignorá-lo no próximo build."
 msgstr "1 new file is outside git. The flake will ignore it on the next build."
 
 #: crates/gtk/src/screens/seu_sistema.rs
-msgid "{0} arquivos novos estão fora do git. O flake vai ignorá-los no próximo build."
-msgstr "{0} new files are outside git. The flake will ignore them on the next build."
+msgid ""
+"{0} arquivos novos estão fora do git. O flake vai ignorá-los no próximo "
+"build."
+msgstr ""
+"{0} new files are outside git. The flake will ignore them on the next build."
 
 #: crates/gtk/src/screens/seu_sistema.rs
 msgid "Adicionar ao git?"
 msgstr "Add to git?"
 
 #: crates/gtk/src/screens/seu_sistema.rs
-msgid "Os arquivos abaixo passam a fazer parte do próximo build do flake. Nada é commitado."
-msgstr "The files below become part of the flake's next build. Nothing is committed."
+msgid ""
+"Os arquivos abaixo passam a fazer parte do próximo build do flake. Nada é "
+"commitado."
+msgstr ""
+"The files below become part of the flake's next build. Nothing is committed."
 
 #: crates/gtk/src/screens/seu_sistema.rs
 msgid "Adicionar"
@@ -1305,3 +1371,28 @@ msgstr "Quit"
 #: crates/gtk/src/widgets/page.rs
 msgid "Menu principal"
 msgstr "Main menu"
+
+#~ msgid ""
+#~ "Você pode construir e revisar a atualização, mas só consegue aplicá-la "
+#~ "com security.polkit.enablePkexecWrapper ativo."
+#~ msgstr ""
+#~ "You can build and review the update, but you can only apply it with "
+#~ "security.polkit.enablePkexecWrapper enabled."
+
+#~ msgid "serão liberados"
+#~ msgstr "will be freed"
+
+#~ msgid ""
+#~ "Ative security.polkit.enablePkexecWrapper (o módulo do Zelador faz isso). "
+#~ "Simular continua disponível."
+#~ msgstr ""
+#~ "Enable security.polkit.enablePkexecWrapper (the Zelador module does "
+#~ "this). Simulate remains available."
+
+#~ msgid ""
+#~ "Também serão removidos {0} de caminhos sem referência, na coleta de lixo."
+#~ msgstr ""
+#~ "Also {0} of unreferenced paths will be removed in the garbage collection."
+
+#~ msgid "Cerca de"
+#~ msgstr "About"

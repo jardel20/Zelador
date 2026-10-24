@@ -45,6 +45,20 @@ pub struct SpaceBreakdown {
 }
 
 impl SpaceBreakdown {
+    /// Converte tamanhos lógicos em uma estimativa do que ocupa o disco (ver `disk::real_ratio`).
+    pub fn scaled(self, ratio: f64) -> Self {
+        let scale = |bytes: u64| crate::disk::scale_bytes(bytes, ratio);
+        Self {
+            total: scale(self.total),
+            system: scale(self.system),
+            home_manager: scale(self.home_manager),
+            dev_environments: scale(self.dev_environments),
+            old_generations: scale(self.old_generations),
+            forgotten_roots: scale(self.forgotten_roots),
+            unreferenced: scale(self.unreferenced),
+        }
+    }
+
     pub fn in_use(&self) -> u64 {
         self.system + self.home_manager + self.dev_environments
     }

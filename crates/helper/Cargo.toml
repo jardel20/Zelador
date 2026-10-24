@@ -18,7 +18,7 @@ path = "src/main.rs"
 # Binário privilegiado: poucas dependências de propósito.
 [dependencies]
 thiserror = "2"
-rustix = { version = "1", features = ["process"] }
+rustix = { version = "1", features = ["process", "net", "stdio"] }
 
 [dev-dependencies]
 tempfile = "3"

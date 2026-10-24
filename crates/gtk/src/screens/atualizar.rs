@@ -408,10 +408,10 @@ fn helper_banner(issue: HelperIssue) -> gtk::Box {
                 "Você pode construir e revisar a atualização, mas só consegue aplicá-la depois de ativar programs.zelador.enable.",
             ),
         ),
-        HelperIssue::PkexecMissing => (
-            tr("O pkexec com setuid não está habilitado neste sistema."),
+        HelperIssue::SocketMissing => (
+            tr("O serviço do helper não está ativo neste sistema."),
             tr(
-                "Você pode construir e revisar a atualização, mas só consegue aplicá-la com security.polkit.enablePkexecWrapper ativo.",
+                "Você pode construir e revisar a atualização, mas só consegue aplicá-la com o zelador-helper.socket ativo (programs.zelador.enable).",
             ),
         ),
     };
