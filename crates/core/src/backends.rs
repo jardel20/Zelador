@@ -2,6 +2,7 @@
 //! os argumentos, rodam o processo por um [`CommandRunner`] e passam a saída aos parsers,
 //! então os testes trocam só o runner por fixtures.
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use crate::diff::{DiffEntry, parse_diff_closures, strip_ansi};
@@ -10,7 +11,10 @@ use crate::flake::{FlakeMetadata, parse_flake_metadata};
 use crate::flatpak::{self, FlatpakRef, FlatpakSummary};
 use crate::git::{GitStatus, parse_status_v2};
 use crate::runner::{CommandRunner, CommandSpec};
-use crate::store::{PathInfo, parse_dead_paths, parse_gc_dry_run, parse_path_info};
+use crate::store::{
+    PathInfo, parse_dead_paths, parse_gc_dry_run, parse_path_info, parse_path_list,
+    parse_path_sizes,
+};
 
 /// `nix.gc.automatic` e `nix.optimise.automatic`, lidos da configuração (nunca escritos).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -30,6 +34,12 @@ pub trait NixBackend {
     fn path_info(&self, paths: &[String], options: PathInfoOptions) -> Result<Vec<PathInfo>>;
     /// Soma dos `narSize` de todo o store.
     fn store_total_bytes(&self) -> Result<u64>;
+    /// `narSize` de todos os caminhos do store (caro: dezenas de segundos).
+    fn path_sizes(&self) -> Result<HashMap<String, u64>>;
+    /// Todos os caminhos de que `path` depende, incluindo ele mesmo.
+    fn closure_paths(&self, path: &str) -> Result<Vec<String>>;
+    /// Dependências diretas de `path`.
+    fn references(&self, path: &str) -> Result<Vec<String>>;
     /// Quantos caminhos o GC apagaria agora.
     fn gc_dry_run(&self) -> Result<u64>;
     fn dead_paths(&self) -> Result<Vec<String>>;
@@ -86,6 +96,21 @@ impl<R: CommandRunner> NixBackend for CliNix<R> {
             .iter()
             .map(|info| info.nar_size)
             .sum())
+    }
+
+    fn path_sizes(&self) -> Result<HashMap<String, u64>> {
+        let spec = nix().args(["path-info", "--json", "--all"]);
+        parse_path_sizes(&self.stdout(&spec)?)
+    }
+
+    fn closure_paths(&self, path: &str) -> Result<Vec<String>> {
+        let spec = CommandSpec::new("nix-store").args(["--query", "--requisites", path]);
+        Ok(parse_path_list(&self.stdout(&spec)?))
+    }
+
+    fn references(&self, path: &str) -> Result<Vec<String>> {
+        let spec = CommandSpec::new("nix-store").args(["--query", "--references", path]);
+        Ok(parse_path_list(&self.stdout(&spec)?))
     }
 
     fn gc_dry_run(&self) -> Result<u64> {

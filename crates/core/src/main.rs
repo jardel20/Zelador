@@ -10,7 +10,7 @@ use zelador_core::runner::SystemRunner;
 use zelador_core::status::{self, PendingChanges, StatusEnv, SystemStatus};
 use zelador_core::units::format_bytes;
 
-const USAGE: &str = "uso: zelador-core status [--flake <pasta>] [--host <nome>]";
+const USAGE: &str = "uso: zelador-core <status|space> [--flake <pasta>] [--host <nome>]";
 
 fn main() -> ExitCode {
     tracing_subscriber::fmt()
@@ -28,8 +28,9 @@ fn main() -> ExitCode {
 
 fn run() -> anyhow::Result<()> {
     let mut args = std::env::args().skip(1);
-    match args.next().as_deref() {
-        Some("status") => {}
+    let command = args.next();
+    match command.as_deref() {
+        Some("status" | "space") => {}
         Some("-h" | "--help") | None => {
             println!("{USAGE}");
             return Ok(());
@@ -50,6 +51,9 @@ fn run() -> anyhow::Result<()> {
     let nix = CliNix::new(SystemRunner);
     let git = CliGit::new(SystemRunner);
     let flatpak = CliFlatpak::new(SystemRunner);
+    if command.as_deref() == Some("space") {
+        return print_space(&env, &nix, &git, &flatpak);
+    }
     let result = status::collect(&env, &nix, &git, &flatpak);
     print_status(&env, &result);
     Ok(())
@@ -170,4 +174,59 @@ fn print_status(env: &StatusEnv, status: &SystemStatus) {
 
 fn yes_no(value: bool) -> &'static str {
     if value { "ativo" } else { "inativo" }
+}
+
+/// Para onde vai o espaço do store, com as raízes de cada categoria (diagnóstico).
+fn print_space(
+    env: &StatusEnv,
+    nix: &CliNix<SystemRunner>,
+    git: &CliGit<SystemRunner>,
+    flatpak: &CliFlatpak<SystemRunner>,
+) -> anyhow::Result<()> {
+    use zelador_core::backends::NixBackend;
+    use zelador_core::space::{SpaceInputs, breakdown, compute_sets, root_paths};
+
+    let status = status::collect_overview(env, nix, git, flatpak);
+    let roots = root_paths(env, &status);
+    println!(
+        "Raízes: sistema {}, Home Manager {}, outras gerações {}, links esquecidos {}",
+        roots.system.len(),
+        roots.home_manager.len(),
+        roots.other_generations.len(),
+        roots.forgotten_roots.len()
+    );
+    let sets = compute_sets(nix, &roots).context("closures")?;
+    let sizes = nix.path_sizes().context("tamanhos do store")?;
+    let dead: std::collections::HashSet<String> = nix
+        .dead_paths()
+        .context("caminhos mortos")?
+        .into_iter()
+        .collect();
+    let result = breakdown(&SpaceInputs {
+        sizes: &sizes,
+        dead: &dead,
+        system: &sets.system,
+        home_manager: &sets.home_manager,
+        old_generations: &sets.old_generations,
+        forgotten_roots: &sets.forgotten_roots,
+    });
+    println!("Total {}", format_bytes(result.total));
+    println!("Em uso {}", format_bytes(result.in_use()));
+    println!("  Sistema {}", format_bytes(result.system));
+    println!("  Home Manager {}", format_bytes(result.home_manager));
+    println!(
+        "  Ambientes de desenvolvimento {}",
+        format_bytes(result.dev_environments)
+    );
+    println!("Pode sair {}", format_bytes(result.reclaimable()));
+    println!(
+        "  Gerações antigas {}",
+        format_bytes(result.old_generations)
+    );
+    println!(
+        "  Links esquecidos {}",
+        format_bytes(result.forgotten_roots)
+    );
+    println!("  Sem referência {}", format_bytes(result.unreferenced));
+    Ok(())
 }

@@ -46,6 +46,15 @@ fn inputs_do_flake_real() {
     );
     let nixpkgs = meta.inputs.iter().find(|i| i.name == "nixpkgs").unwrap();
     assert_eq!(nixpkgs.kind, "github");
+    assert_eq!(nixpkgs.reference.as_deref(), Some("nixos-unstable"));
+    // Sem ref pedida, o rótulo mostra de onde o input vem.
+    let niri = meta.inputs.iter().find(|i| i.name == "niri").unwrap();
+    assert!(
+        niri.source.as_deref().is_some_and(|s| s.contains('/')),
+        "{:?}",
+        niri.source
+    );
+    assert!(niri.label().contains(" · "));
     assert_eq!(nixpkgs.short_rev().map(str::len), Some(7));
     assert!(nixpkgs.last_modified.is_some());
     assert!(meta.dirty_revision.is_some_and(|r| r.ends_with("-dirty")));
@@ -113,6 +122,15 @@ impl NixBackend for DeadPathsFixture {
             .collect())
     }
     fn store_total_bytes(&self) -> zelador_core::Result<u64> {
+        unreachable!()
+    }
+    fn path_sizes(&self) -> zelador_core::Result<std::collections::HashMap<String, u64>> {
+        unreachable!()
+    }
+    fn closure_paths(&self, _: &str) -> zelador_core::Result<Vec<String>> {
+        unreachable!()
+    }
+    fn references(&self, _: &str) -> zelador_core::Result<Vec<String>> {
         unreachable!()
     }
     fn gc_dry_run(&self) -> zelador_core::Result<u64> {
@@ -474,4 +492,77 @@ fn commits_pendentes_com_git_real() {
     let status = backend.status(repo).unwrap();
     assert!(status.untracked.is_empty());
     assert_eq!(status.modified, ["novo.nix"]);
+}
+
+// ---- tamanho incremental das gerações, via CliNix ----
+
+#[test]
+fn tamanho_incremental_das_geracoes_usa_uma_consulta_recursiva_por_geracao() {
+    use zelador_core::generations::{Generation, GenerationKind, generation_sizes};
+    let generation = |number: u64, path: &str| Generation {
+        kind: GenerationKind::System,
+        number,
+        store_path: path.into(),
+        created: 0,
+        kernel: None,
+        is_current: false,
+        is_boot_default: false,
+    };
+    // Geração 2 (nova): a, b. Geração 1 (antiga): b, c. Só `c` é novo para a 1.
+    let two = r#"{"/nix/store/a-x":{"narSize":10},"/nix/store/b-x":{"narSize":20}}"#;
+    let one = r#"{"/nix/store/b-x":{"narSize":20},"/nix/store/c-x":{"narSize":40}}"#;
+    let runner = FixtureRunner::new()
+        .with_output(
+            "nix path-info --json --recursive /nix/store/g2-system",
+            two,
+            0,
+        )
+        .with_output(
+            "nix path-info --json --recursive /nix/store/g1-system",
+            one,
+            0,
+        );
+    let nix = CliNix::new(runner);
+    let sizes = generation_sizes(
+        &nix,
+        &[
+            generation(1, "/nix/store/g1-system"),
+            generation(2, "/nix/store/g2-system"),
+        ],
+    )
+    .unwrap();
+    assert_eq!(sizes, [(2, 30), (1, 40)]);
+}
+
+#[test]
+fn closures_e_referencias_do_store() {
+    let runner = FixtureRunner::new()
+        .with_output(
+            "nix-store --query --requisites /nix/store/a-x",
+            "/nix/store/b-y\n/nix/store/a-x\n",
+            0,
+        )
+        .with_output(
+            "nix-store --query --references /nix/store/a-x",
+            "/nix/store/b-y\n",
+            0,
+        );
+    let nix = CliNix::new(runner);
+    assert_eq!(
+        nix.closure_paths("/nix/store/a-x").unwrap(),
+        ["/nix/store/b-y", "/nix/store/a-x"]
+    );
+    assert_eq!(
+        nix.references("/nix/store/a-x").unwrap(),
+        ["/nix/store/b-y"]
+    );
+}
+
+#[test]
+fn tamanhos_de_todo_o_store_sem_alocar_referencias() {
+    let runner =
+        FixtureRunner::new().with_fixture("nix path-info --json --all", "path-info-sample.json");
+    let sizes = CliNix::new(runner).path_sizes().unwrap();
+    assert!(sizes.len() >= 300);
+    assert!(sizes.values().sum::<u64>() > 1_000_000_000);
 }

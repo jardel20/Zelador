@@ -1,5 +1,8 @@
 //! Janela principal: `AdwNavigationSplitView` com a barra lateral e a pilha de telas.
 
+use zelador_core::status::StatusEnv;
+
+use crate::ctx::Ctx;
 use crate::pages::Page;
 use crate::widgets::{page, sidebar};
 
@@ -10,6 +13,7 @@ pub struct Context {
     /// Caminho do flake como aparece na barra lateral (com `~`).
     pub flake_label: String,
     pub start: Page,
+    pub env: StatusEnv,
 }
 
 impl Context {
@@ -18,6 +22,7 @@ impl Context {
         Self {
             flake_label: abbreviate_home(&flake),
             start: crate::start_page_from_env(),
+            env: StatusEnv::detect(flake.into(), std::env::var("ZELADOR_HOST").ok()),
         }
     }
 }
@@ -34,11 +39,12 @@ fn abbreviate_home(path: &str) -> String {
 }
 
 pub fn build(app: &adw::Application, context: &Context) -> adw::ApplicationWindow {
+    let ctx = Ctx::new(context.env.clone());
     let stack = gtk::Stack::builder()
         .transition_type(gtk::StackTransitionType::Crossfade)
         .build();
     for page in Page::ALL {
-        stack.add_named(&page::build(page), Some(page.id()));
+        stack.add_named(&page::build(page, &ctx), Some(page.id()));
     }
 
     let sidebar = sidebar::build(&context.flake_label, {
@@ -81,13 +87,29 @@ pub fn build(app: &adw::Application, context: &Context) -> adw::ApplicationWindo
         gtk::glib::idle_add_local_once(move || stack.set_visible_child_name(page.id()));
     }
 
-    adw::ApplicationWindow::builder()
+    ctx.set_navigation({
+        let list = sidebar.list.clone();
+        move |page| {
+            if let Some(row) = Page::NAV
+                .iter()
+                .position(|candidate| *candidate == page)
+                .and_then(|index| i32::try_from(index).ok())
+                .and_then(|index| list.row_at_index(index))
+            {
+                list.select_row(Some(&row));
+            }
+        }
+    });
+    ctx.toasts.set_child(Some(&split));
+    let window = adw::ApplicationWindow::builder()
         .application(app)
         .title("Zelador")
         .default_width(1100)
         .default_height(760)
-        .content(&split)
-        .build()
+        .content(&ctx.toasts)
+        .build();
+    ctx.set_window(&window);
+    window
 }
 
 #[cfg(test)]

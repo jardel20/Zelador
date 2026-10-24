@@ -3,50 +3,84 @@
 
 use adw::prelude::*;
 
+use std::rc::Rc;
+
+use crate::ctx::Ctx;
 use crate::i18n::tr;
 use crate::pages::Page;
+use crate::screens;
 use crate::widgets::{bottom_bar, column};
 
-pub fn build(page: Page) -> adw::ToolbarView {
+pub fn build(page: Page, ctx: &Rc<Ctx>) -> adw::ToolbarView {
     let view = adw::ToolbarView::new();
     view.add_top_bar(&top_bar(page));
 
-    let column = gtk::Box::builder()
+    let title = gtk::Label::builder()
+        .label(page.title())
+        .css_classes(["page-title"])
+        .xalign(0.0)
+        .wrap(true)
+        .build();
+    let intro = gtk::Label::builder()
+        .label(page.intro())
+        .css_classes(["page-intro"])
+        .xalign(0.0)
+        .wrap(true)
+        .max_width_chars(60)
+        .build();
+    let texts = gtk::Box::builder()
         .orientation(gtk::Orientation::Vertical)
         .spacing(10)
+        .hexpand(true)
+        .build();
+    texts.append(&title);
+    texts.append(&intro);
+
+    let screen = screens::build(page, ctx, &intro, &view);
+
+    // Título e parágrafo à esquerda; um controle opcional (ex.: alternador) à direita.
+    let head = gtk::Box::builder()
+        .orientation(gtk::Orientation::Horizontal)
+        .spacing(16)
+        .valign(gtk::Align::End)
+        .build();
+    head.append(&texts);
+    if let Some(end) = screen.as_ref().and_then(|s| s.header_end.as_ref()) {
+        head.append(end);
+    }
+
+    let column = gtk::Box::builder()
+        .orientation(gtk::Orientation::Vertical)
+        .spacing(24)
         .margin_top(8)
         .margin_bottom(40)
         .build();
-    column.append(
-        &gtk::Label::builder()
-            .label(page.title())
-            .css_classes(["page-title"])
-            .xalign(0.0)
-            .wrap(true)
-            .build(),
-    );
-    column.append(
-        &gtk::Label::builder()
-            .label(page.intro())
-            .css_classes(["page-intro"])
-            .xalign(0.0)
-            .wrap(true)
-            .max_width_chars(60)
-            .build(),
-    );
+    column.append(&head);
+    if let Some(screen) = &screen {
+        column.append(&screen.body);
+    }
 
     // Margem lateral de 56 px (mockups) e coluna alinhada à esquerda.
     let content = column::left_column(page.max_width(), &column);
     content.set_margin_start(56);
     content.set_margin_end(56);
-    content.set_halign(gtk::Align::Fill);
-    let clamp = content;
     let scroll = gtk::ScrolledWindow::builder()
         .hscrollbar_policy(gtk::PolicyType::Never)
         .vexpand(true)
-        .child(&clamp)
+        .child(&content)
         .build();
     view.set_content(Some(&scroll));
+    // Só para verificação visual: rola até o fim depois de N segundos.
+    if let Some(seconds) = std::env::var("ZELADOR_SCROLL_END_AFTER")
+        .ok()
+        .and_then(|v| v.parse::<u32>().ok())
+    {
+        let scroll = scroll.clone();
+        gtk::glib::timeout_add_seconds_local_once(seconds, move || {
+            let adjustment = scroll.vadjustment();
+            adjustment.set_value(adjustment.upper());
+        });
+    }
 
     if let Some(bar) = bottom_bar::for_page(page) {
         view.add_bottom_bar(&bar);

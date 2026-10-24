@@ -123,6 +123,35 @@ pub fn incremental_sizes(
         .collect()
 }
 
+/// Tamanho incremental de cada geração, `(número, bytes)`, da mais nova para a mais antiga.
+/// Uma consulta recursiva por geração: o Nix responde em décimos de segundo.
+pub fn generation_sizes(
+    nix: &dyn crate::backends::NixBackend,
+    generations: &[Generation],
+) -> Result<Vec<(u64, u64)>> {
+    let mut ordered: Vec<&Generation> = generations.iter().collect();
+    ordered.sort_by_key(|g| std::cmp::Reverse(g.number));
+    let mut closures = Vec::with_capacity(ordered.len());
+    let mut sizes = HashMap::new();
+    for generation in ordered {
+        let path = generation.store_path.to_string_lossy().into_owned();
+        let infos = nix.path_info(
+            &[path],
+            crate::backends::PathInfoOptions {
+                closure_size: false,
+                recursive: true,
+            },
+        )?;
+        let mut paths = HashSet::with_capacity(infos.len());
+        for info in infos {
+            sizes.insert(info.path.clone(), info.nar_size);
+            paths.insert(info.path);
+        }
+        closures.push((generation.number, paths));
+    }
+    Ok(incremental_sizes(&closures, &sizes))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

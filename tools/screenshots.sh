@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Captura cada tela do app num compositor Wayland sem tela (cage headless), para comparar
 # com design/mockups/. Não abre janelas na sua sessão.
-# Uso: [ESQUEMA=prefer-dark] [TEMA_SISTEMA=1] [PAGINAS="seu-sistema geracoes"] \
+# Uso: [ESPERA=segundos] [ZELADOR_DEV_ACTION=select-two|compare|why] [ZELADOR_SCROLL_END_AFTER=segundos] [ZELADOR_FLAKE=/etc/nixos] [ESQUEMA=prefer-dark] [TEMA_SISTEMA=1] [PAGINAS="seu-sistema geracoes"] \
 #        nix develop path:. -c tools/screenshots.sh <pasta de saída> [binário]
 set -euo pipefail
 out="${1:?pasta de saída}"
@@ -27,7 +27,7 @@ for page in ${PAGINAS:-seu-sistema atualizar geracoes liberar-espaco espaco-em-d
         sock="$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -name "wayland-*" ! -name "*.lock" -printf "%f" -quit)"
         [ -n "$sock" ] && break; sleep 0.1
       done
-      sleep 3
+      sleep "${ESPERA:-3}"
       WAYLAND_DISPLAY="$sock" grim "'"$out/$page.png"'"
       kill %1 2>/dev/null || true
     '

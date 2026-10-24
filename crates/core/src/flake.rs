@@ -18,6 +18,8 @@ pub struct FlakeInput {
     pub kind: String,
     /// Ref pedida no `flake.nix` (`nixos-unstable`, `main`).
     pub reference: Option<String>,
+    /// Origem legível quando não há ref: `owner/repo`, ou a URL.
+    pub source: Option<String>,
     pub rev: Option<String>,
     /// Epoch, em segundos.
     pub last_modified: Option<i64>,
@@ -30,7 +32,11 @@ impl FlakeInput {
 
     /// `nixos-unstable · 8f3c1a2`, como na tela "Seu sistema".
     pub fn label(&self) -> String {
-        let reference = self.reference.as_deref().unwrap_or(&self.kind);
+        let reference = self
+            .reference
+            .as_deref()
+            .or(self.source.as_deref())
+            .unwrap_or(&self.kind);
         match self.short_rev() {
             Some(rev) => format!("{reference} · {rev}"),
             None => reference.to_owned(),
@@ -92,6 +98,9 @@ struct RawLocked {
 struct RawOriginal {
     #[serde(rename = "ref")]
     reference: Option<String>,
+    owner: Option<String>,
+    repo: Option<String>,
+    url: Option<String>,
 }
 
 pub fn parse_flake_metadata(json: &str) -> Result<FlakeMetadata> {
@@ -116,6 +125,13 @@ pub fn parse_flake_metadata(json: &str) -> Result<FlakeMetadata> {
                 .and_then(|l| l.kind.clone())
                 .unwrap_or_else(|| "desconhecido".to_owned()),
             reference: node.original.as_ref().and_then(|o| o.reference.clone()),
+            source: node
+                .original
+                .as_ref()
+                .and_then(|o| match (&o.owner, &o.repo) {
+                    (Some(owner), Some(repo)) => Some(format!("{owner}/{repo}")),
+                    _ => o.url.clone(),
+                }),
             rev: locked.and_then(|l| l.rev.clone()),
             last_modified: locked.and_then(|l| l.last_modified),
         });

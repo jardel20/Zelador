@@ -25,6 +25,8 @@ pub struct StatusEnv {
     pub system_profiles_dir: PathBuf,
     pub home_manager_profiles_dir: PathBuf,
     pub current_system: PathBuf,
+    /// Link do Home Manager em uso (`~/.local/state/home-manager/gcroots/current-home`).
+    pub current_home: PathBuf,
     pub auto_gcroots_dir: PathBuf,
     pub stale_days: i64,
 }
@@ -45,9 +47,11 @@ impl StatusEnv {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_or(0, |d| i64::try_from(d.as_secs()).unwrap_or(0));
+        let current_home = home.join(".local/state/home-manager/gcroots/current-home");
         Self {
             flake,
             host,
+            current_home,
             now,
             system_profiles_dir: SYSTEM_PROFILES_DIR.into(),
             home_manager_profiles_dir: home.join(".local/state/nix/profiles"),
@@ -138,7 +142,9 @@ impl SystemStatus {
     }
 }
 
-pub fn collect(
+/// Tudo de `collect` menos o tamanho do store e a estimativa de limpeza, que levam dezenas
+/// de segundos. A UI usa esta parte primeiro e completa o resto depois.
+pub fn collect_overview(
     env: &StatusEnv,
     nix: &dyn NixBackend,
     git: &dyn GitBackend,
@@ -202,10 +208,6 @@ pub fn collect(
         );
     }
 
-    let total = warnings.keep("tamanho do store", nix.store_total_bytes());
-    let gc = warnings.keep("estimativa de limpeza", gc_estimate(nix));
-    status.store = total.map(|total_bytes| StoreStatus { total_bytes, gc });
-
     status.forgotten_roots = warnings
         .keep(
             "links de build esquecidos",
@@ -226,6 +228,21 @@ pub fn collect(
         )
         .flatten();
 
+    status.warnings = warnings.0;
+    status
+}
+
+pub fn collect(
+    env: &StatusEnv,
+    nix: &dyn NixBackend,
+    git: &dyn GitBackend,
+    flatpak: &dyn FlatpakBackend,
+) -> SystemStatus {
+    let mut status = collect_overview(env, nix, git, flatpak);
+    let mut warnings = Warnings(std::mem::take(&mut status.warnings));
+    let total = warnings.keep("tamanho do store", nix.store_total_bytes());
+    let gc = warnings.keep("estimativa de limpeza", gc_estimate(nix));
+    status.store = total.map(|total_bytes| StoreStatus { total_bytes, gc });
     status.warnings = warnings.0;
     status
 }

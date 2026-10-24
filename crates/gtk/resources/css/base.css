@@ -38,7 +38,7 @@ window {
 }
 
 /* ── Raios e botões ──────────────────────────────────────────────────────── */
-button:not(.flat):not(.circular):not(.image-button) {
+button:not(.flat):not(.circular):not(.image-button):not(.seg-button) {
   min-height: 40px;
   padding: 0 20px;
   border-radius: 8px;
@@ -46,13 +46,13 @@ button:not(.flat):not(.circular):not(.image-button) {
 }
 
 /* Botões neutros dos mockups: fundo branco e borda #CFCFCF. */
-button:not(.flat):not(.circular):not(.suggested-action):not(.destructive-action):not(.image-button) {
+button:not(.flat):not(.circular):not(.suggested-action):not(.destructive-action):not(.image-button):not(.seg-button) {
   background: @zel_surface;
   border: 1px solid @zel_btn_border;
   box-shadow: none;
 }
 
-button:not(.flat):not(.suggested-action):not(.destructive-action):not(.image-button):hover {
+button:not(.flat):not(.suggested-action):not(.destructive-action):not(.image-button):not(.seg-button):hover {
   background: @zel_hover;
 }
 
@@ -170,4 +170,112 @@ list.navigation-sidebar > row:selected:hover {
 
 .dot.dot-active {
   background: @zel_primary;
+}
+
+/* ── Fase 4 ─────────────────────────────────────────────────────────────── */
+preferencesgroup > box > box > label.heading,
+preferencesgroup .heading {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+row.mono-subtitle .subtitle,
+row.mono-subtitle .subtitle label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12.5px;
+}
+
+row.mono-title .title,
+row.mono-title .title label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12.5px;
+}
+
+row.muted-row .title {
+  color: @zel_text_muted;
+  font-weight: 400;
+}
+
+.tag {
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: @zel_tag_bg;
+  color: @zel_primary_dark;
+}
+
+.gen-title {
+  font-weight: 500;
+}
+
+.gen-selected {
+  background: @zel_sel_card;
+}
+
+.seg-group {
+  border: 1px solid @zel_btn_border;
+  border-radius: 6px;
+  background: @zel_surface;
+}
+
+.seg-group > .seg-button {
+  min-height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.seg-group > .seg-button + .seg-button {
+  border-left: 1px solid @zel_btn_border;
+}
+
+.seg-group > .seg-button:checked {
+  background: @zel_sel_list;
+  color: @zel_primary_dark;
+  font-weight: 600;
+}
+
+button.destructive-outline {
+  color: @zel_destructive;
+  border-color: alpha(@zel_destructive, 0.45);
+}
+
+.warn-icon {
+  color: @zel_warn_text;
+}
+
+.banner-title {
+  font-weight: 500;
+}
+
+.banner-files {
+  color: @zel_warn_text;
+}
+
+.sw {
+  border-radius: 3px;
+}
+
+.sw-use_1 { background: @zel_use_1; }
+.sw-use_2 { background: @zel_use_2; }
+.sw-use_3 { background: @zel_use_3; }
+.sw-free_1 { background: @zel_free_1; }
+.sw-free_2 { background: @zel_free_2; }
+.sw-free_3 { background: @zel_free_3; }
+
+button.link-button {
+  color: @zel_link;
+  min-height: 32px;
+  padding: 0 8px;
+}
+
+buttoncontent label {
+  font-weight: 500;
+}
+
+.seg-group > .seg-button:hover:not(:checked) {
+  background: @zel_hover;
 }

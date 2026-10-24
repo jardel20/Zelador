@@ -1,8 +1,12 @@
 //! Zelador — painel operacional do NixOS (GTK4 + libadwaita).
 
 mod actions;
+mod ctx;
+mod format;
 mod i18n;
+mod loader;
 mod pages;
+mod screens;
 mod settings;
 mod style;
 mod widgets;
@@ -47,4 +51,13 @@ pub fn start_page_from_env() -> Page {
         .ok()
         .and_then(|id| Page::from_id(&id))
         .unwrap_or(Page::SeuSistema)
+}
+
+/// Gancho de verificação visual: `ZELADOR_DEV_ACTION=select-two|compare|why` abre estados que
+/// só existem depois de um clique, para as capturas de `tools/screenshots.sh`. Sem a variável,
+/// nada muda.
+pub fn dev_action() -> Option<String> {
+    std::env::var("ZELADOR_DEV_ACTION")
+        .ok()
+        .filter(|v| !v.is_empty())
 }
