@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Zelador
+GenericName=Gerenciador do NixOS
+Comment=Atualize, volte e libere espaço no NixOS
+Exec=zelador
+Icon=br.dev.zelador
+Terminal=false
+Categories=System;Settings;
+Keywords=nixos;nix;atualizar;gerações;espaço;limpeza;
+StartupNotify=true

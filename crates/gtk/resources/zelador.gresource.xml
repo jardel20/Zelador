@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/br/dev/zelador">
+    <file>icons/scalable/actions/arrows-clockwise-symbolic.svg</file>
+    <file>icons/scalable/actions/broom-symbolic.svg</file>
+    <file>icons/scalable/actions/caret-right-symbolic.svg</file>
+    <file>icons/scalable/actions/check-circle-fill-symbolic.svg</file>
+    <file>icons/scalable/actions/check-symbolic.svg</file>
+    <file>icons/scalable/actions/circle-notch-symbolic.svg</file>
+    <file>icons/scalable/actions/circle-symbolic.svg</file>
+    <file>icons/scalable/actions/dots-three-symbolic.svg</file>
+    <file>icons/scalable/actions/folder-open-symbolic.svg</file>
+    <file>icons/scalable/actions/git-branch-symbolic.svg</file>
+    <file>icons/scalable/actions/hard-drives-symbolic.svg</file>
+    <file>icons/scalable/actions/list-symbolic.svg</file>
+    <file>icons/scalable/actions/pulse-symbolic.svg</file>
+    <file>icons/scalable/actions/stack-symbolic.svg</file>
+    <file>icons/scalable/actions/warning-symbolic.svg</file>
+    <file>icons/scalable/actions/x-symbolic.svg</file>
+    <file alias="icons/scalable/apps/br.dev.zelador.svg">../data/icons/hicolor/scalable/apps/br.dev.zelador.svg</file>
+    <file alias="icons/16x16/apps/br.dev.zelador.svg">../data/icons/hicolor/16x16/apps/br.dev.zelador.svg</file>
+    <file alias="icons/32x32/apps/br.dev.zelador.svg">../data/icons/hicolor/32x32/apps/br.dev.zelador.svg</file>
+  </gresource>
+</gresources>

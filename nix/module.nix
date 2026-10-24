@@ -14,6 +14,13 @@ in
   options.programs.zelador = {
     enable = lib.mkEnableOption "o Zelador (painel operacional do NixOS)";
 
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.callPackage ./app.nix { };
+      defaultText = lib.literalExpression "pkgs.callPackage ./app.nix { }";
+      description = "O app (janela, ícones e entrada .desktop).";
+    };
+
     helperPackage = lib.mkOption {
       type = lib.types.package;
       default = pkgs.callPackage ./helper.nix { nix = config.nix.package; };
@@ -30,7 +37,15 @@ in
     # No nixpkgs atual o pkexec setuid é opcional e vem desligado; sem ele, o app não
     # consegue chamar o helper. O app usa /run/wrappers/bin/pkexec, nunca o do PATH.
     security.polkit.enablePkexecWrapper = lib.mkDefault true;
-    environment.systemPackages = [ cfg.helperPackage ];
+    environment.systemPackages = [
+      cfg.package
+      cfg.helperPackage
+    ];
+    # Fontes da identidade visual (Poppins para a interface, JetBrains Mono para caminhos).
+    fonts.packages = [
+      pkgs.poppins
+      pkgs.jetbrains-mono
+    ];
     environment.pathsToLink = [ "/share/polkit-1/actions" ];
   };
 }

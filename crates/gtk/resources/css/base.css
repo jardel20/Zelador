@@ -1,0 +1,173 @@
+/* Regras da identidade do Zelador. Todas as cores vêm dos tokens (tokens-*.css). */
+
+/* ── Tipografia ──────────────────────────────────────────────────────────── */
+* {
+  font-family: "Poppins", "Ubuntu Sans", sans-serif;
+}
+
+window {
+  font-size: 14px;
+}
+
+.mono,
+.mono * {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12.5px;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.page-intro {
+  font-size: 15px;
+  line-height: 1.6;
+  color: @zel_text_body;
+}
+
+.caption-text {
+  font-size: 12.5px;
+  color: @zel_text_muted;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* ── Raios e botões ──────────────────────────────────────────────────────── */
+button:not(.flat):not(.circular):not(.image-button) {
+  min-height: 40px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* Botões neutros dos mockups: fundo branco e borda #CFCFCF. */
+button:not(.flat):not(.circular):not(.suggested-action):not(.destructive-action):not(.image-button) {
+  background: @zel_surface;
+  border: 1px solid @zel_btn_border;
+  box-shadow: none;
+}
+
+button:not(.flat):not(.suggested-action):not(.destructive-action):not(.image-button):hover {
+  background: @zel_hover;
+}
+
+button.suggested-action:hover {
+  background: @zel_primary_hover;
+}
+
+button.destructive-action:hover {
+  background: shade(@zel_destructive, 0.85);
+}
+
+button.flat.image-button,
+button.flat.circular {
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 6px;
+}
+
+headerbar {
+  min-height: 52px;
+}
+
+entry,
+spinbutton {
+  border-radius: 6px;
+  min-height: 36px;
+}
+
+.card,
+.boxed-list,
+list.boxed-list {
+  border-radius: 12px;
+  border: 1px solid @zel_border;
+  background: @zel_surface;
+}
+
+.boxed-list > row + row {
+  border-top: 1px solid @zel_divider;
+}
+
+/* ── Barra lateral ───────────────────────────────────────────────────────── */
+.zelador-sidebar {
+  background: @zel_surface;
+  padding: 18px 12px 18px 12px;
+}
+
+.zelador-sidebar .app-name {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.zelador-sidebar .flake-path {
+  color: @zel_text_muted;
+}
+
+.zelador-sidebar .versions {
+  font-size: 13px;
+  color: @zel_text_muted;
+  padding: 12px 8px 0 8px;
+}
+
+list.navigation-sidebar {
+  background: transparent;
+}
+
+list.navigation-sidebar > row {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 6px;
+  margin: 1px 0;
+  color: @zel_text;
+}
+
+list.navigation-sidebar > row:hover {
+  background: @zel_hover;
+}
+
+list.navigation-sidebar > row:selected,
+list.navigation-sidebar > row:selected:hover {
+  background: @zel_sel_list;
+  color: @zel_primary_dark;
+  font-weight: 500;
+}
+
+/* ── Páginas ─────────────────────────────────────────────────────────────── */
+.step-label {
+  font-size: 13.5px;
+  color: @zel_text_muted;
+}
+
+.zelador-bottom-bar {
+  background: @zel_surface;
+  border-top: 1px solid @zel_border_side;
+  padding: 14px 56px;
+}
+
+.warning-banner {
+  background: @zel_warn_bg;
+  border: 1px solid @zel_warn_border;
+  border-radius: 12px;
+  padding: 16px 18px;
+  color: @zel_text;
+}
+
+.age-stale {
+  color: @zel_warn_text;
+}
+
+.dot {
+  min-width: 8px;
+  min-height: 8px;
+  border-radius: 50%;
+  background: @zel_dot;
+}
+
+.dot.dot-active {
+  background: @zel_primary;
+}

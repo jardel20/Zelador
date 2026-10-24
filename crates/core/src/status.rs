@@ -267,6 +267,30 @@ pub fn gc_estimate(nix: &dyn NixBackend) -> crate::Result<GcEstimate> {
     })
 }
 
+/// Versões mostradas no rodapé da barra lateral: `(NixOS, Nix)`, ex.: `("26.11", "2.34.9")`.
+pub fn system_versions(
+    runner: &dyn crate::runner::CommandRunner,
+) -> (Option<String>, Option<String>) {
+    let nixos = fs::read_to_string("/etc/os-release")
+        .ok()
+        .and_then(|text| os_release_value(&text, "VERSION_ID"));
+    let spec = crate::runner::CommandSpec::new("nix").arg("--version");
+    let nix = runner
+        .run(&spec)
+        .and_then(|out| out.into_stdout(&spec))
+        .ok()
+        .and_then(|text| parse_nix_version(&text));
+    (nixos, nix)
+}
+
+/// `nix (Nix) 2.34.9` → `2.34.9`.
+fn parse_nix_version(text: &str) -> Option<String> {
+    text.split_whitespace()
+        .last()
+        .filter(|v| v.starts_with(|c: char| c.is_ascii_digit()))
+        .map(str::to_owned)
+}
+
 fn os_release_value(text: &str, key: &str) -> Option<String> {
     text.lines()
         .find_map(|line| line.strip_prefix(key)?.strip_prefix('='))
@@ -341,6 +365,19 @@ mod tests {
             matches!(gone, PendingChanges::Approximate { ref reasons, .. }
             if reasons == &[ApproximationReason::RevisionNotInRepo])
         );
+    }
+
+    #[test]
+    fn versao_do_nix() {
+        assert_eq!(
+            parse_nix_version("nix (Nix) 2.34.9\n").as_deref(),
+            Some("2.34.9")
+        );
+        assert_eq!(
+            parse_nix_version("nix (Lix, like Nix) 2.93.0").as_deref(),
+            Some("2.93.0")
+        );
+        assert_eq!(parse_nix_version("sem versão"), None);
     }
 
     #[test]

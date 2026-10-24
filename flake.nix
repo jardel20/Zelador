@@ -18,6 +18,7 @@
       };
 
       packages = forAllSystems (pkgs: {
+        zelador = pkgs.callPackage ./nix/app.nix { };
         zelador-helper = pkgs.callPackage ./nix/helper.nix { };
 
         # Fase 1: só o crate `zelador-core` (biblioteca e CLI de debug).
@@ -56,6 +57,14 @@
             git
             nvd
           ];
+          # Fontes da identidade visual visíveis ao fontconfig no devShell. No sistema, o
+          # módulo NixOS as instala em fonts.packages.
+          FONTCONFIG_FILE = pkgs.makeFontsConf {
+            fontDirectories = [
+              pkgs.poppins
+              pkgs.jetbrains-mono
+            ];
+          };
         };
       });
     };

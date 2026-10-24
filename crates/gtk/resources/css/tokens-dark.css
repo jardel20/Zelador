@@ -1,0 +1,56 @@
+/* Tokens do tema escuro: derivados do claro e aprovados (contraste WCAG conferido). */
+
+/* ── Tokens (tema claro) ─────────────────────────────────────────────────── */
+@define-color zel_primary      #4467B0;
+@define-color zel_primary_hover #3A5A9E;
+@define-color zel_primary_dark #A9C4F0;
+@define-color zel_primary_light #7EBAE4;
+@define-color zel_sel_list     #2A3550;
+@define-color zel_sel_card     #232C43;
+@define-color zel_surface      #26272C;
+@define-color zel_window       #1C1D21;
+@define-color zel_border       #3A3C42;
+@define-color zel_border_side  #34363B;
+@define-color zel_divider      #2F3136;
+@define-color zel_text         #ECECEE;
+@define-color zel_text_body    #B4B5BA;
+@define-color zel_text_muted   #9A9BA1;
+@define-color zel_warn_text    #F0B260;
+@define-color zel_warn_bg      #3A2E1A;
+@define-color zel_warn_border  #6B5530;
+@define-color zel_destructive  #C7162B;
+@define-color zel_hover        #303238;
+
+/* ── Cores do libadwaita ─────────────────────────────────────────────────── */
+@define-color accent_bg_color @zel_primary;
+@define-color accent_fg_color #FFFFFF;
+@define-color accent_color    @zel_primary_hover;
+@define-color destructive_bg_color @zel_destructive;
+@define-color destructive_color    #FF6B78;
+@define-color window_bg_color  @zel_window;
+@define-color window_fg_color  @zel_text;
+@define-color view_bg_color    @zel_surface;
+@define-color view_fg_color    @zel_text;
+@define-color headerbar_bg_color @zel_window;
+@define-color headerbar_fg_color @zel_text;
+@define-color headerbar_border_color transparent;
+@define-color headerbar_backdrop_color @zel_window;
+@define-color card_bg_color    @zel_surface;
+@define-color card_fg_color    @zel_text;
+@define-color sidebar_bg_color @zel_surface;
+@define-color sidebar_fg_color @zel_text;
+@define-color sidebar_border_color @zel_border_side;
+@define-color sidebar_backdrop_color @zel_surface;
+@define-color warning_bg_color  @zel_warn_bg;
+@define-color warning_fg_color  @zel_warn_text;
+@define-color warning_color     @zel_warn_text;
+@define-color zel_link         #8FB4EA;
+@define-color zel_btn_border   #4A4C52;
+@define-color zel_dot          #4A4C52;
+@define-color zel_tag_bg       #2A3550;
+@define-color zel_use_1        #A9C4F0;
+@define-color zel_use_2        #6F94DA;
+@define-color zel_use_3        #4A6FB8;
+@define-color zel_free_1       #E39A4C;
+@define-color zel_free_2       #CC7A1F;
+@define-color zel_free_3       #A8651E;
