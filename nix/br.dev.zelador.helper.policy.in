@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+  "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+<policyconfig>
+  <vendor>Zelador</vendor>
+  <vendor_url>https://github.com/jardel/Zelador</vendor_url>
+
+  <action id="br.dev.zelador.helper">
+    <description>Alterar o sistema NixOS pelo Zelador</description>
+    <description xml:lang="pt_BR">Alterar o sistema NixOS pelo Zelador</description>
+    <message>É necessário autenticar para aplicar, reverter ou limpar o sistema NixOS</message>
+    <message xml:lang="pt_BR">É necessário autenticar para aplicar, reverter ou limpar o sistema NixOS</message>
+    <!-- Sempre pede a senha: sem auth_admin_keep, nada fica autorizado em segundo plano.
+         allow_inactive cobre sessões que o polkit não considera ativas (ex.: compositores
+         iniciados pelo user@UID). -->
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">@helper@</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+</policyconfig>

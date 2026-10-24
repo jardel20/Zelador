@@ -1,0 +1,25 @@
+[package]
+name = "zelador-helper"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+name = "zelador_helper"
+path = "src/lib.rs"
+
+[[bin]]
+name = "zelador-helper"
+path = "src/main.rs"
+
+# Binário privilegiado: poucas dependências de propósito.
+[dependencies]
+thiserror = "2"
+rustix = { version = "1", features = ["process"] }
+
+[dev-dependencies]
+tempfile = "3"
+rustix = { version = "1", features = ["process"] }

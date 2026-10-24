@@ -10,7 +10,16 @@
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
     in
     {
+      nixosModules.default = import ./nix/module.nix { inherit self; };
+
+      checks.x86_64-linux.helper-vm = import ./nix/vm-test.nix {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        module = self.nixosModules.default;
+      };
+
       packages = forAllSystems (pkgs: {
+        zelador-helper = pkgs.callPackage ./nix/helper.nix { };
+
         # Fase 1: só o crate `zelador-core` (biblioteca e CLI de debug).
         default = pkgs.rustPlatform.buildRustPackage {
           pname = "zelador-core";
