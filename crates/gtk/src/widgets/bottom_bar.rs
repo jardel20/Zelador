@@ -10,8 +10,8 @@ pub fn for_page(page: Page) -> Option<gtk::Widget> {
     match page {
         Page::Atualizar => Some(wizard_bar()),
         Page::Aplicando => Some(applying_bar()),
-        Page::LiberarEspaco => Some(clean_bar()),
-        Page::SeuSistema | Page::Geracoes | Page::EspacoEmDisco => None,
+        // A barra de "Liberar espaço" é dinâmica e vive em `screens::liberar`.
+        Page::LiberarEspaco | Page::SeuSistema | Page::Geracoes | Page::EspacoEmDisco => None,
     }
 }
 
@@ -73,25 +73,5 @@ fn applying_bar() -> gtk::Widget {
     );
     bar.append(&spacer());
     bar.append(&button(&tr("Concluir"), &[]));
-    bar.upcast()
-}
-
-fn clean_bar() -> gtk::Widget {
-    let bar = shell();
-    bar.append(
-        &gtk::Label::builder()
-            .label(tr("Nada selecionado"))
-            .css_classes(["strong"])
-            .build(),
-    );
-    bar.append(
-        &gtk::Label::builder()
-            .label(tr("para liberar"))
-            .css_classes(["caption-text"])
-            .build(),
-    );
-    bar.append(&spacer());
-    bar.append(&button(&tr("Simular"), &[]));
-    bar.append(&button(&tr("Limpar"), &["destructive-action"]));
     bar.upcast()
 }

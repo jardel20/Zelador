@@ -13,7 +13,7 @@ use zelador_helper::Rejection;
 use zelador_helper::exec::{Executor, Failure, run_plan};
 use zelador_helper::lock::{Lock, LockError};
 use zelador_helper::plan::{Plan, SWITCH_UNIT, Step, validate};
-use zelador_helper::request::{Mode, Request};
+use zelador_helper::request::{CleanRequest, Mode, Request};
 use zelador_helper::roots::{Roots, Tools};
 
 struct Sandbox {
@@ -508,4 +508,74 @@ fn a_trava_impede_duas_operacoes_ao_mesmo_tempo() {
     assert!(matches!(Lock::acquire(&path), Err(LockError::Busy)));
     drop(first);
     assert!(Lock::acquire(&path).is_ok());
+}
+
+#[test]
+fn clean_encadeia_as_mesmas_operacoes_na_ordem_fixa() {
+    let sb = Sandbox::new();
+    sb.with_generations();
+    fs::create_dir_all(&sb.roots.flatpak_repo).unwrap();
+    let plan = sb
+        .plan(&Request::Clean(CleanRequest {
+            generations: vec![1, 2],
+            flatpak: true,
+            gc: true,
+            optimise: true,
+        }))
+        .unwrap();
+    let programs: Vec<_> = plan
+        .steps
+        .iter()
+        .map(|s| s.program.to_string_lossy().into_owned())
+        .collect();
+    // nix-env (excluir), systemd-run (boot), flatpak, nix-store --gc, nix-store --optimise.
+    assert_eq!(
+        programs,
+        [
+            "/t/nix-env",
+            "/t/systemd-run",
+            "/t/flatpak",
+            "/t/nix-store",
+            "/t/nix-store"
+        ]
+    );
+    assert_eq!(plan.steps[3].args, args(&["--gc"]));
+    assert_eq!(plan.steps[4].args, args(&["--optimise"]));
+    // Idêntico ao que os subcomandos avulsos gerariam.
+    let alone = sb.plan(&Request::DeleteGenerations(vec![1, 2])).unwrap();
+    assert_eq!(&plan.steps[..2], &alone.steps[..]);
+}
+
+#[test]
+fn clean_herda_todas_as_recusas_dos_subcomandos() {
+    let sb = Sandbox::new();
+    sb.with_generations();
+    // Geração em uso (3) e padrão do boot continuam protegidas.
+    assert_eq!(
+        sb.plan(&Request::Clean(CleanRequest {
+            generations: vec![1, 3],
+            gc: true,
+            ..CleanRequest::default()
+        }))
+        .unwrap_err(),
+        Rejection::GenerationProtected(3)
+    );
+    assert_eq!(
+        sb.plan(&Request::Clean(CleanRequest {
+            generations: vec![42],
+            ..CleanRequest::default()
+        }))
+        .unwrap_err(),
+        Rejection::GenerationMissing(42)
+    );
+    // Flatpak sem instalação de sistema.
+    assert_eq!(
+        sb.plan(&Request::Clean(CleanRequest {
+            flatpak: true,
+            gc: true,
+            ..CleanRequest::default()
+        }))
+        .unwrap_err(),
+        Rejection::NoSystemFlatpak
+    );
 }

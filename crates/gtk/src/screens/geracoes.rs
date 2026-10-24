@@ -1,15 +1,17 @@
 //! "Gerações": lista do sistema e do Home Manager, com seleção e comparação.
 //! Somente leitura: voltar, tornar padrão e excluir dependem do helper (fases seguintes).
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::{BTreeSet, HashMap};
 use std::rc::Rc;
 
 use adw::prelude::*;
 use gtk::{gio, glib};
 use zelador_core::backends::NixBackend;
+use zelador_core::cleanup::{HelperClient, HelperIssue, PrivilegedHelper};
 use zelador_core::diff::{DiffEntry, summarize};
 use zelador_core::generations::{Generation, GenerationKind, generation_sizes};
+use zelador_core::runner::SystemRunner;
 use zelador_core::units::format_bytes;
 
 use super::Screen;
@@ -42,7 +44,12 @@ struct Ui {
     list: gtk::ListBox,
     count: gtk::Label,
     compare: gtk::Button,
+    delete: gtk::Button,
     view: adw::ToolbarView,
+    /// Por que as ações privilegiadas estão indisponíveis (helper não instalado), se for o caso.
+    helper_issue: Option<HelperIssue>,
+    /// Uma ação em andamento: bloqueia outra ao mesmo tempo.
+    busy: Cell<bool>,
 }
 
 pub fn build(ctx: &Rc<Ctx>, intro: &gtk::Label, view: &adw::ToolbarView) -> Screen {
@@ -59,9 +66,6 @@ pub fn build(ctx: &Rc<Ctx>, intro: &gtk::Label, view: &adw::ToolbarView) -> Scre
         .label(tr("Excluir"))
         .css_classes(["destructive-outline"])
         .sensitive(false)
-        .tooltip_text(tr(
-            "A exclusão de gerações ainda não está disponível nesta versão",
-        ))
         .build();
     let compare = gtk::Button::builder()
         .label(tr("Comparar"))
@@ -92,8 +96,17 @@ pub fn build(ctx: &Rc<Ctx>, intro: &gtk::Label, view: &adw::ToolbarView) -> Scre
         list,
         count,
         compare: compare.clone(),
+        delete: delete.clone(),
         view: view.clone(),
+        helper_issue: HelperClient::production(SystemRunner).check().err(),
+        busy: Cell::new(false),
     });
+
+    delete.connect_clicked(glib::clone!(
+        #[strong]
+        ui,
+        move |_| confirm_delete(&ui)
+    ));
 
     compare.connect_clicked(glib::clone!(
         #[strong]
@@ -370,7 +383,7 @@ fn generation_row(
             .valign(gtk::Align::Center)
             .build(),
     );
-    content.append(&options_menu(generation));
+    content.append(&options_menu(ui, generation));
 
     let row = gtk::ListBoxRow::builder()
         .child(&content)
@@ -389,28 +402,247 @@ fn tag(text: &str) -> gtk::Label {
         .build()
 }
 
-/// Menu ⋯ da geração. As ações existem, mas ficam desabilitadas: dependem do helper.
-fn options_menu(generation: &Generation) -> gtk::MenuButton {
+/// Menu ⋯ da geração. As ações do sistema dependem do helper; as do Home Manager não existem
+/// aqui (reativar uma geração do Home Manager por fora do `home-manager switch` é arriscado).
+fn options_menu(ui: &Rc<Ui>, generation: &Generation) -> gtk::MenuButton {
     let menu = gio::Menu::new();
     menu.append(Some(&tr("Voltar para esta")), Some("gen.rollback"));
     if generation.kind == GenerationKind::System {
         menu.append(Some(&tr("Tornar padrão no boot")), Some("gen.set-boot"));
     }
+    let is_system = generation.kind == GenerationKind::System;
+    let helper_ok = ui.helper_issue.is_none();
     let actions = gio::SimpleActionGroup::new();
-    for name in ["rollback", "set-boot"] {
+    let make = |name: &str, enabled: bool, on_activate: Box<dyn Fn()>| {
         let action = gio::SimpleAction::new(name, None);
-        action.set_enabled(false);
+        action.set_enabled(enabled);
+        action.connect_activate(move |_, _| on_activate());
         actions.add_action(&action);
-    }
+    };
+    let number = generation.number;
+    let (ui1, ui2) = (Rc::clone(ui), Rc::clone(ui));
+    make(
+        "rollback",
+        is_system && helper_ok && !generation.is_current,
+        Box::new(move || confirm_rollback(&ui1, number)),
+    );
+    make(
+        "set-boot",
+        is_system && helper_ok && !generation.is_boot_default,
+        Box::new(move || confirm_set_boot(&ui2, number)),
+    );
+    let tooltip = if let Some(issue) = ui.helper_issue.filter(|_| is_system) {
+        helper_issue_text(issue)
+    } else if !is_system {
+        tr("Para o Home Manager, use o próprio home-manager")
+    } else {
+        format!("{} {}", tr("Opções da geração"), generation.number)
+    };
     let button = gtk::MenuButton::builder()
         .icon_name("dots-three-symbolic")
         .menu_model(&menu)
         .css_classes(["flat"])
         .valign(gtk::Align::Center)
-        .tooltip_text(format!("{} {}", tr("Opções da geração"), generation.number))
+        .tooltip_text(tooltip)
         .build();
     button.insert_action_group("gen", Some(&actions));
     button
+}
+
+fn helper_issue_text(issue: HelperIssue) -> String {
+    match issue {
+        HelperIssue::PkexecMissing => tr("O pkexec com setuid não está habilitado neste sistema"),
+        HelperIssue::HelperMissing | HelperIssue::PolicyMissing => {
+            tr("O helper privilegiado não está instalado neste sistema")
+        }
+    }
+}
+
+// ── Ações que alteram o sistema (sempre com confirmação) ───────────────────
+
+fn confirm(
+    ui: &Rc<Ui>,
+    heading: String,
+    body: String,
+    action_label: String,
+    appearance: adw::ResponseAppearance,
+    on_confirm: impl Fn() + 'static,
+) {
+    if ui.busy.get() {
+        return;
+    }
+    let dialog = adw::AlertDialog::builder()
+        .heading(heading)
+        .body(body)
+        .close_response("cancel")
+        .default_response("cancel")
+        .build();
+    dialog.add_responses(&[("cancel", &tr("Cancelar")), ("go", &action_label)]);
+    dialog.set_response_appearance("go", appearance);
+    dialog.connect_response(None, move |_, response| {
+        if response == "go" {
+            on_confirm();
+        }
+    });
+    dialog.present(ui.ctx.window().as_ref());
+}
+
+fn confirm_rollback(ui: &Rc<Ui>, number: u64) {
+    let ui2 = Rc::clone(ui);
+    confirm(
+        ui,
+        format!("{} {number}?", tr("Voltar para a geração")),
+        tr(
+            "O sistema passa a usar esta geração agora e ela vira o padrão no boot. Serviços podem reiniciar e programas abertos podem precisar ser reiniciados. Será pedida a senha de administrador.",
+        ),
+        tr("Voltar"),
+        adw::ResponseAppearance::Suggested,
+        move || {
+            run_helper(
+                &ui2,
+                vec!["rollback".to_owned(), number.to_string()],
+                format!("{} {number}", tr("Voltou para a geração")),
+            );
+        },
+    );
+}
+
+fn confirm_set_boot(ui: &Rc<Ui>, number: u64) {
+    let ui2 = Rc::clone(ui);
+    confirm(
+        ui,
+        format!(
+            "{} {number} {}",
+            tr("Tornar a geração"),
+            tr("o padrão no boot?")
+        ),
+        tr(
+            "No próximo reinício o sistema inicia nesta geração. Nada muda agora. Será pedida a senha de administrador.",
+        ),
+        tr("Tornar padrão"),
+        adw::ResponseAppearance::Suggested,
+        move || {
+            run_helper(
+                &ui2,
+                vec!["set-boot-default".to_owned(), number.to_string()],
+                format!(
+                    "{} {number} {}",
+                    tr("Geração"),
+                    tr("é o novo padrão no boot")
+                ),
+            );
+        },
+    );
+}
+
+fn confirm_delete(ui: &Rc<Ui>) {
+    let (kind, numbers) = {
+        let state = ui.state.borrow();
+        (
+            state.kind,
+            state.selected.iter().copied().collect::<Vec<u64>>(),
+        )
+    };
+    if numbers.is_empty() {
+        return;
+    }
+    let list = numbers
+        .iter()
+        .map(u64::to_string)
+        .collect::<Vec<_>>()
+        .join(", ");
+    let password = if kind == GenerationKind::System {
+        tr(" Será pedida a senha de administrador.")
+    } else {
+        String::new()
+    };
+    let ui2 = Rc::clone(ui);
+    confirm(
+        ui,
+        if numbers.len() == 1 {
+            tr("Excluir 1 geração?")
+        } else {
+            format!("{} {} {}", tr("Excluir"), numbers.len(), tr("gerações?"))
+        },
+        format!(
+            "{} {list}. {}{password}",
+            tr("Gerações:"),
+            tr(
+                "Os arquivos só saem do disco na próxima limpeza (coleta de lixo). Não dá para desfazer."
+            )
+        ),
+        tr("Excluir"),
+        adw::ResponseAppearance::Destructive,
+        move || delete_generations(&ui2, kind, numbers.clone()),
+    );
+}
+
+fn delete_generations(ui: &Rc<Ui>, kind: GenerationKind, numbers: Vec<u64>) {
+    let message = if numbers.len() == 1 {
+        tr("Geração excluída")
+    } else {
+        tr("Gerações excluídas")
+    };
+    match kind {
+        GenerationKind::System => {
+            let mut args = vec!["delete-generations".to_owned()];
+            args.extend(numbers.iter().map(u64::to_string));
+            run_helper(ui, args, message);
+        }
+        GenerationKind::HomeManager => {
+            let profile = ui.ctx.env.home_manager_profiles_dir.join("home-manager");
+            run_blocking(ui, message, move || {
+                nix()
+                    .delete_user_generations(&profile, &numbers)
+                    .map_err(|e| e.to_string())
+            });
+        }
+    }
+}
+
+fn run_helper(ui: &Rc<Ui>, args: Vec<String>, success: String) {
+    run_blocking(ui, success, move || {
+        HelperClient::production(SystemRunner)
+            .run(&args)
+            .map_err(|e| e.to_string())
+    });
+}
+
+/// Roda a ação fora da thread principal, avisa o resultado e recarrega a lista.
+fn run_blocking(
+    ui: &Rc<Ui>,
+    success: String,
+    work: impl FnOnce() -> Result<(), String> + Send + 'static,
+) {
+    ui.busy.set(true);
+    ui.delete.set_sensitive(false);
+    let ui = Rc::clone(ui);
+    run_in_background(work, move |result| {
+        ui.busy.set(false);
+        match result {
+            Ok(()) => ui.ctx.toast(&success),
+            Err(error) => ui
+                .ctx
+                .toast(&format!("{} {error}", tr("Não foi possível concluir:"))),
+        }
+        reload(&ui);
+    });
+}
+
+/// Relê as gerações e refaz a lista (e os tamanhos) depois de uma mudança.
+fn reload(ui: &Rc<Ui>) {
+    let ui = Rc::clone(ui);
+    let ctx = Rc::clone(&ui.ctx);
+    ctx.overview.refresh(move |status| {
+        let kind = {
+            let mut state = ui.state.borrow_mut();
+            state.system = status.generations.clone();
+            state.home_manager = status.home_manager_generations.clone();
+            state.sizes.clear();
+            state.kind
+        };
+        switch_kind(&ui, kind);
+    });
 }
 
 fn toggle_selection(ui: &Rc<Ui>, number: u64, selected: bool) {
@@ -446,7 +678,18 @@ fn toggle_selection(ui: &Rc<Ui>, number: u64, selected: bool) {
 }
 
 fn update_selection_ui(ui: &Rc<Ui>) {
-    let n = ui.state.borrow().selected.len();
+    let (n, protected, kind) = {
+        let state = ui.state.borrow();
+        let generations = match state.kind {
+            GenerationKind::System => &state.system,
+            GenerationKind::HomeManager => &state.home_manager,
+        };
+        let protected = generations
+            .iter()
+            .filter(|g| state.selected.contains(&g.number))
+            .any(|g| g.is_current || (g.kind == GenerationKind::System && g.is_boot_default));
+        (state.selected.len(), protected, state.kind)
+    };
     ui.view.set_reveal_bottom_bars(n > 0);
     let label = match n {
         1 => tr("1 selecionada"),
@@ -457,6 +700,21 @@ fn update_selection_ui(ui: &Rc<Ui>) {
     let hint = tr("Selecione duas gerações para comparar");
     ui.compare
         .set_tooltip_text(if n == 2 { None } else { Some(hint.as_str()) });
+
+    // Excluir: nunca a geração em uso nem a padrão do boot; as do sistema precisam do helper.
+    let helper_needed = kind == GenerationKind::System;
+    let reason = if protected {
+        Some(tr(
+            "A geração em uso e a padrão do boot não podem ser excluídas",
+        ))
+    } else if let (true, Some(issue)) = (helper_needed, ui.helper_issue) {
+        Some(helper_issue_text(issue))
+    } else {
+        None
+    };
+    ui.delete
+        .set_sensitive(n > 0 && reason.is_none() && !ui.busy.get());
+    ui.delete.set_tooltip_text(reason.as_deref());
 }
 
 /// Compara as duas gerações selecionadas: da mais antiga para a mais nova.

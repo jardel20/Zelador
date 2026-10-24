@@ -8,6 +8,7 @@
   glib,
   gtk4,
   libadwaita,
+  zelador-helper,
 }:
 rustPlatform.buildRustPackage {
   pname = "zelador";
@@ -25,6 +26,9 @@ rustPlatform.buildRustPackage {
   cargoLock.lockFile = ../Cargo.lock;
   cargoBuildFlags = [ "--package" "zelador-gtk" ];
   cargoTestFlags = [ "--package" "zelador-gtk" ];
+
+  # A limpeza chama o helper por este caminho do store.
+  ZELADOR_HELPER = "${zelador-helper}/bin/zelador-helper";
 
   nativeBuildInputs = [
     pkg-config

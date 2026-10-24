@@ -5,6 +5,7 @@ use std::process::ExitCode;
 
 use anyhow::{Context, bail};
 use zelador_core::backends::{CliFlatpak, CliGit, CliNix};
+use zelador_core::cleanup::Policy;
 use zelador_core::flake::DEFAULT_STALE_DAYS;
 use zelador_core::runner::SystemRunner;
 use zelador_core::status::{self, PendingChanges, StatusEnv, SystemStatus};
@@ -30,7 +31,7 @@ fn run() -> anyhow::Result<()> {
     let mut args = std::env::args().skip(1);
     let command = args.next();
     match command.as_deref() {
-        Some("status" | "space") => {}
+        Some("status" | "space" | "clean") => {}
         Some("-h" | "--help") | None => {
             println!("{USAGE}");
             return Ok(());
@@ -39,10 +40,34 @@ fn run() -> anyhow::Result<()> {
     }
     let mut flake = PathBuf::from("/etc/nixos");
     let mut host = None;
+    let mut clean = CleanArgs::default();
     while let Some(arg) = args.next() {
+        let number =
+            |args: &mut dyn Iterator<Item = String>, name: &str| -> anyhow::Result<usize> {
+                args.next()
+                    .with_context(|| format!("{name} pede um número"))?
+                    .parse()
+                    .with_context(|| format!("{name}: número inválido"))
+            };
         match arg.as_str() {
             "--flake" => flake = args.next().context("--flake pede uma pasta")?.into(),
             "--host" => host = Some(args.next().context("--host pede um nome")?),
+            "--keep-system" if command.as_deref() == Some("clean") => {
+                clean.policy.keep_system = number(&mut args, "--keep-system")?;
+            }
+            "--keep-hm" if command.as_deref() == Some("clean") => {
+                clean.policy.keep_home_manager = number(&mut args, "--keep-hm")?;
+            }
+            "--keep-days" if command.as_deref() == Some("clean") => {
+                clean.policy.keep_days = u32::try_from(number(&mut args, "--keep-days")?)
+                    .context("--keep-days: valor grande demais")?;
+            }
+            "--no-generations" if command.as_deref() == Some("clean") => clean.generations = false,
+            "--no-links" if command.as_deref() == Some("clean") => clean.links = false,
+            "--flatpak" if command.as_deref() == Some("clean") => clean.flatpak = true,
+            "--optimise" if command.as_deref() == Some("clean") => clean.optimise = true,
+            "--execute" if command.as_deref() == Some("clean") => clean.execute = true,
+            "--yes" if command.as_deref() == Some("clean") => clean.yes = true,
             other => bail!("argumento desconhecido: {other}\n{USAGE}"),
         }
     }
@@ -53,6 +78,9 @@ fn run() -> anyhow::Result<()> {
     let flatpak = CliFlatpak::new(SystemRunner);
     if command.as_deref() == Some("space") {
         return print_space(&env, &nix, &git, &flatpak);
+    }
+    if command.as_deref() == Some("clean") {
+        return run_clean(&env, &nix, &git, &flatpak, &clean);
     }
     let result = status::collect(&env, &nix, &git, &flatpak);
     print_status(&env, &result);
@@ -228,5 +256,152 @@ fn print_space(
         format_bytes(result.forgotten_roots)
     );
     println!("  Sem referência {}", format_bytes(result.unreferenced));
+    Ok(())
+}
+
+struct CleanArgs {
+    policy: Policy,
+    generations: bool,
+    links: bool,
+    flatpak: bool,
+    optimise: bool,
+    execute: bool,
+    yes: bool,
+}
+
+impl Default for CleanArgs {
+    fn default() -> Self {
+        Self {
+            policy: Policy::default(),
+            generations: true,
+            links: true,
+            flatpak: false,
+            optimise: false,
+            execute: false,
+            yes: false,
+        }
+    }
+}
+
+/// Simula (padrão) ou executa a limpeza. Executar exige `--execute --yes` e o helper instalado.
+fn run_clean(
+    env: &StatusEnv,
+    nix: &CliNix<SystemRunner>,
+    git: &CliGit<SystemRunner>,
+    flatpak: &CliFlatpak<SystemRunner>,
+    args: &CleanArgs,
+) -> anyhow::Result<()> {
+    use zelador_core::backends::NixBackend;
+    use zelador_core::cleanup::{
+        Cleaner, HelperClient, Selection, StepKind, build_plan, closure_index, dry_run, estimate,
+    };
+    use zelador_core::disk::free_bytes;
+
+    let status = status::collect_overview(env, nix, git, flatpak);
+    let selection = Selection {
+        generations: args.generations,
+        links: if args.links {
+            status
+                .forgotten_roots
+                .iter()
+                .filter(|root| root.selected_by_default)
+                .map(|root| root.path.clone())
+                .collect()
+        } else {
+            Vec::new()
+        },
+        flatpak: args.flatpak,
+        optimise: args.optimise,
+    };
+    let plan = build_plan(&status, args.policy, &selection, env.now);
+    println!(
+        "Encontradas: {} gerações do sistema, {} do Home Manager, {} links esquecidos",
+        status.generations.len(),
+        status.home_manager_generations.len(),
+        status.forgotten_roots.len()
+    );
+    for warning in &status.warnings {
+        println!("  aviso: {warning}");
+    }
+    println!("Plano:");
+    println!(
+        "  Gerações do sistema a excluir: {:?}",
+        plan.system_generations
+    );
+    println!(
+        "  Gerações do Home Manager a excluir: {:?}",
+        plan.home_manager_generations
+    );
+    for root in &plan.links {
+        println!("  Link esquecido: {}", root.path.display());
+    }
+    println!(
+        "  Runtimes Flatpak sem uso: {}",
+        if plan.flatpak { "sim" } else { "não" }
+    );
+    println!(
+        "  Deduplicar o store: {}",
+        if plan.optimise { "sim" } else { "não" }
+    );
+    if plan.is_empty() {
+        println!("Nada a fazer.");
+        return Ok(());
+    }
+
+    if !args.execute {
+        let sizes = nix.path_sizes().context("tamanhos do store")?;
+        let dead: std::collections::HashSet<String> = nix
+            .dead_paths()
+            .context("caminhos mortos")?
+            .into_iter()
+            .collect();
+        let index = closure_index(nix, env, &status).context("closures")?;
+        let flatpak_bytes = status.flatpak.as_ref().map_or(0, |f| f.unused_bytes);
+        let result = estimate(&index, &sizes, &dead, &plan, flatpak_bytes);
+        println!("Estimativa (simulação, nada foi alterado):");
+        println!("  Gerações {}", format_bytes(result.generations));
+        println!("  Links {}", format_bytes(result.links));
+        println!("  Sem referência {}", format_bytes(result.unreferenced));
+        println!("  Flatpak {}", format_bytes(result.flatpak));
+        println!("  Total {}", format_bytes(result.total()));
+        if let Some(paths) = dry_run(nix, &plan).context("simulação do GC")?.gc_paths {
+            println!("  O GC apagaria hoje {paths} caminhos (nix store gc --dry-run)");
+        }
+        return Ok(());
+    }
+
+    if !args.yes {
+        bail!("--execute altera o sistema: confirme com --yes");
+    }
+    let helper = HelperClient::production(SystemRunner);
+    if let Err(issue) = helper.check() {
+        bail!("o helper privilegiado não está disponível: {issue:?}");
+    }
+    let cleaner = Cleaner {
+        nix,
+        flatpak,
+        helper: &helper,
+        home: &env.home,
+        home_manager_profile: &env.home_manager_profiles_dir.join("home-manager"),
+    };
+    let before = free_bytes(std::path::Path::new("/nix")).unwrap_or(0);
+    for step in plan.steps() {
+        let name = match step.kind {
+            StepKind::RemoveLinks => "removendo links esquecidos",
+            StepKind::HomeManagerGenerations => "excluindo gerações do Home Manager",
+            StepKind::FlatpakUser => "removendo runtimes Flatpak sem uso (usuário)",
+            StepKind::Privileged => {
+                "etapa privilegiada: excluindo gerações do sistema, coletando lixo do store e deduplicando"
+            }
+        };
+        println!("→ {name}…");
+        cleaner.run(step, &plan).with_context(|| name.to_owned())?;
+    }
+    let after = free_bytes(std::path::Path::new("/nix")).unwrap_or(0);
+    println!(
+        "Concluído. Espaço livre: {} → {}",
+        format_bytes(before),
+        format_bytes(after)
+    );
     Ok(())
 }

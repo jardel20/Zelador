@@ -33,13 +33,27 @@ impl Mode {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Request {
-    Activate { path: PathBuf, mode: Mode },
+    Activate {
+        path: PathBuf,
+        mode: Mode,
+    },
     Rollback(u64),
     SetBootDefault(u64),
     DeleteGenerations(Vec<u64>),
     Gc,
     Optimise,
     FlatpakRemoveUnused,
+    /// Uma limpeza completa com uma só autenticação: as mesmas operações dos subcomandos
+    /// acima, numa gramática fixa e na ordem fixa gerações → Flatpak → GC → otimização.
+    Clean(CleanRequest),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct CleanRequest {
+    pub generations: Vec<u64>,
+    pub flatpak: bool,
+    pub gc: bool,
+    pub optimise: bool,
 }
 
 /// `args` não inclui o nome do programa.
@@ -83,6 +97,7 @@ where
             }
             Ok(Request::DeleteGenerations(numbers))
         }
+        "clean" => parse_clean(&rest).map(Request::Clean),
         "gc" => no_args("gc", rest).map(|()| Request::Gc),
         "optimise" => no_args("optimise", rest).map(|()| Request::Optimise),
         "flatpak-remove-unused" => {
@@ -90,6 +105,46 @@ where
         }
         _ => Err(Rejection::UnknownSubcommand(sub)),
     }
+}
+
+/// `clean [--generations <n>...] [--flatpak] [--gc] [--optimise]`: cada opção no máximo uma
+/// vez, ao menos uma presente, sem nada além disso.
+fn parse_clean(args: &[OsString]) -> Result<CleanRequest, Rejection> {
+    let mut request = CleanRequest::default();
+    let (mut seen_generations, mut index) = (false, 0);
+    while index < args.len() {
+        match path_str(&args[index])? {
+            "--generations" => {
+                if seen_generations {
+                    return Err(Rejection::WrongArgCount("clean"));
+                }
+                seen_generations = true;
+                index += 1;
+                let start = index;
+                while index < args.len() && !path_str(&args[index])?.starts_with("--") {
+                    let n = generation(path_str(&args[index])?)?;
+                    if request.generations.contains(&n) {
+                        return Err(Rejection::DuplicateGeneration(n));
+                    }
+                    request.generations.push(n);
+                    index += 1;
+                }
+                if index == start {
+                    return Err(Rejection::WrongArgCount("clean"));
+                }
+                continue;
+            }
+            "--flatpak" if !request.flatpak => request.flatpak = true,
+            "--gc" if !request.gc => request.gc = true,
+            "--optimise" if !request.optimise => request.optimise = true,
+            _ => return Err(Rejection::WrongArgCount("clean")),
+        }
+        index += 1;
+    }
+    if request == CleanRequest::default() {
+        return Err(Rejection::WrongArgCount("clean"));
+    }
+    Ok(request)
 }
 
 fn exactly<const N: usize>(
@@ -180,6 +235,63 @@ mod tests {
             parse(&["delete-generations", "2", "2"]),
             Err(Rejection::DuplicateGeneration(2))
         );
+    }
+
+    #[test]
+    fn clean_agregado() {
+        assert_eq!(
+            parse(&[
+                "clean",
+                "--generations",
+                "3",
+                "1",
+                "--flatpak",
+                "--gc",
+                "--optimise"
+            ]),
+            Ok(Request::Clean(CleanRequest {
+                generations: vec![3, 1],
+                flatpak: true,
+                gc: true,
+                optimise: true
+            }))
+        );
+        assert_eq!(
+            parse(&["clean", "--gc"]),
+            Ok(Request::Clean(CleanRequest {
+                gc: true,
+                ..CleanRequest::default()
+            }))
+        );
+        // A ordem das opções não importa.
+        assert_eq!(
+            parse(&["clean", "--optimise", "--generations", "2"]).unwrap(),
+            parse(&["clean", "--generations", "2", "--optimise"]).unwrap()
+        );
+    }
+
+    #[test]
+    fn clean_rejeita_tudo_fora_da_gramatica() {
+        for bad in [
+            &["clean"][..],
+            &["clean", "--generations"],
+            &["clean", "--generations", "--gc"],
+            &["clean", "--generations", "1", "--generations", "2"],
+            &["clean", "--gc", "--gc"],
+            &["clean", "--flatpak", "--flatpak"],
+            &["clean", "--optimise", "--optimise"],
+            &["clean", "gc"],
+            &["clean", "--gc", "extra"],
+            &["clean", "--all"],
+            &["clean", "--gc=1"],
+            &["clean", "--generations", "1", "1"],
+            &["clean", "--generations", "-1"],
+            &["clean", "--generations", "0"],
+            &["clean", "--generations", "1;ls"],
+            &["clean", "-g"],
+        ] {
+            assert!(parse(bad).is_err(), "{bad:?} deveria ser recusado");
+        }
     }
 
     #[test]

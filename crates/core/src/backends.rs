@@ -49,6 +49,8 @@ pub trait NixBackend {
     fn auto_maintenance(&self, flake: &Path, host: &str) -> Result<AutoMaintenance>;
     /// `services.flatpak.uninstallUnused` do nix-flatpak; `None` se a opção não existe.
     fn flatpak_uninstall_unused(&self, flake: &Path, host: &str) -> Result<Option<bool>>;
+    /// Apaga gerações de um perfil do usuário (Home Manager), sem privilégio.
+    fn delete_user_generations(&self, profile: &Path, numbers: &[u64]) -> Result<()>;
 }
 
 #[derive(Debug, Clone)]
@@ -157,6 +159,15 @@ impl<R: CommandRunner> NixBackend for CliNix<R> {
         })
     }
 
+    fn delete_user_generations(&self, profile: &Path, numbers: &[u64]) -> Result<()> {
+        let spec = CommandSpec::new("nix-env")
+            .arg("-p")
+            .arg(profile.to_string_lossy())
+            .arg("--delete-generations")
+            .args(numbers.iter().map(u64::to_string));
+        self.runner.run(&spec)?.into_stdout(&spec).map(drop)
+    }
+
     fn flatpak_uninstall_unused(&self, flake: &Path, host: &str) -> Result<Option<bool>> {
         let spec = nix().args(["eval", "--json"]).arg(format!(
             "{}#nixosConfigurations.{host}.config.services.flatpak.uninstallUnused",
@@ -258,6 +269,8 @@ impl<R: CommandRunner> GitBackend for CliGit<R> {
 
 pub trait FlatpakBackend {
     fn summary(&self) -> Result<FlatpakSummary>;
+    /// Remove os runtimes sem uso da instalação do usuário (a de sistema passa pelo helper).
+    fn remove_unused_user(&self) -> Result<()>;
 }
 
 #[derive(Debug, Clone)]
@@ -285,6 +298,13 @@ impl<R: CommandRunner> CliFlatpak<R> {
 }
 
 impl<R: CommandRunner> FlatpakBackend for CliFlatpak<R> {
+    fn remove_unused_user(&self) -> Result<()> {
+        let spec = CommandSpec::new("flatpak")
+            .args(["uninstall", "--user", "--unused", "--noninteractive"])
+            .env("LC_ALL", "C");
+        self.runner.run(&spec)?.into_stdout(&spec).map(drop)
+    }
+
     fn summary(&self) -> Result<FlatpakSummary> {
         let apps = self.list("--app")?;
         let runtimes = self.list("--runtime")?;

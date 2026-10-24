@@ -18,29 +18,15 @@
       };
 
       packages = forAllSystems (pkgs: {
-        zelador = pkgs.callPackage ./nix/app.nix { };
-        zelador-helper = pkgs.callPackage ./nix/helper.nix { };
 
-        # Fase 1: só o crate `zelador-core` (biblioteca e CLI de debug).
-        default = pkgs.rustPlatform.buildRustPackage {
-          pname = "zelador-core";
-          version = "0.1.0";
-          src = pkgs.lib.fileset.toSource {
-            root = ./.;
-            fileset = pkgs.lib.fileset.unions [
-              ./Cargo.toml
-              ./Cargo.lock
-              ./clippy.toml
-              ./crates
-            ];
-          };
-          cargoLock.lockFile = ./Cargo.lock;
-          cargoBuildFlags = [ "--package" "zelador-core" ];
-          cargoTestFlags = [ "--package" "zelador-core" ];
-          # Os testes de integração criam repositórios git temporários.
-          nativeCheckInputs = [ pkgs.git ];
-          meta.mainProgram = "zelador-core";
+        zelador-helper = pkgs.callPackage ./nix/helper.nix { };
+        zelador-core = pkgs.callPackage ./nix/core.nix {
+          zelador-helper = self.packages.${pkgs.stdenv.hostPlatform.system}.zelador-helper;
         };
+        zelador = pkgs.callPackage ./nix/app.nix {
+          zelador-helper = self.packages.${pkgs.stdenv.hostPlatform.system}.zelador-helper;
+        };
+        default = self.packages.${pkgs.stdenv.hostPlatform.system}.zelador-core;
       });
 
       devShells = forAllSystems (pkgs: {

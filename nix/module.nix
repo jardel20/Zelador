@@ -16,9 +16,16 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.callPackage ./app.nix { };
-      defaultText = lib.literalExpression "pkgs.callPackage ./app.nix { }";
+      default = pkgs.callPackage ./app.nix { zelador-helper = cfg.helperPackage; };
+      defaultText = lib.literalExpression "pkgs.callPackage ./app.nix { zelador-helper = config.programs.zelador.helperPackage; }";
       description = "O app (janela, ícones e entrada .desktop).";
+    };
+
+    cliPackage = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.callPackage ./core.nix { zelador-helper = cfg.helperPackage; };
+      defaultText = lib.literalExpression "pkgs.callPackage ./core.nix { zelador-helper = config.programs.zelador.helperPackage; }";
+      description = "CLI de diagnóstico (`zelador-core status|space|clean`).";
     };
 
     helperPackage = lib.mkOption {
@@ -39,6 +46,7 @@ in
     security.polkit.enablePkexecWrapper = lib.mkDefault true;
     environment.systemPackages = [
       cfg.package
+      cfg.cliPackage
       cfg.helperPackage
     ];
     # Fontes da identidade visual (Poppins para a interface, JetBrains Mono para caminhos).

@@ -2,6 +2,7 @@
 
 mod espaco;
 mod geracoes;
+mod liberar;
 mod seu_sistema;
 
 use std::rc::Rc;
@@ -26,6 +27,7 @@ pub fn build(
         Page::SeuSistema => Some(seu_sistema::build(ctx, intro)),
         Page::Geracoes => Some(geracoes::build(ctx, intro, view)),
         Page::EspacoEmDisco => Some(espaco::build(ctx, intro)),
-        Page::Atualizar | Page::LiberarEspaco | Page::Aplicando => None,
+        Page::LiberarEspaco => Some(liberar::build(ctx, intro, view)),
+        Page::Atualizar | Page::Aplicando => None,
     }
 }

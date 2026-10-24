@@ -37,6 +37,9 @@ pkgs.testers.runNixOSTest {
             "activate /etc test",
             "activate /nix/store/../etc test",
             "gc --max-freed 1",
+            "clean",
+            "clean --gc --gc",
+            "clean --generations --gc",
             "rollback -1",
             "delete-generations",
         ]:
@@ -92,6 +95,33 @@ pkgs.testers.runNixOSTest {
         # handle"). Aqui basta provar que o comando rodou e que o helper propagou a falha.
         status, out = machine.execute(as_user("alice", f"{pkexec} {helper} optimise 2>&1"))
         assert status == 0 or ("Stale file handle" in out and "passo 1 terminou com código" in out), (status, out)
+
+    with subtest("zelador-core clean: simula sem alterar e executa pelo helper com pkexec"):
+        # Cria uma geração antiga (a alternativa) e devolve o boot para a original.
+        machine.succeed(as_user("alice", f"{pkexec} {helper} activate {alt} boot"))
+        gens = machine.succeed("ls /nix/var/nix/profiles | sed -n 's/^system-\\([0-9]*\\)-link$/\\1/p' | sort -n").split()
+        orig_gen = [g for g in gens if machine.succeed(f"readlink -f /nix/var/nix/profiles/system-{g}-link").strip() == original][0]
+        alt_gen = [g for g in gens if machine.succeed(f"readlink -f /nix/var/nix/profiles/system-{g}-link").strip() == alt][-1]
+        machine.succeed(as_user("alice", f"{pkexec} {helper} set-boot-default {orig_gen}"))
+        machine.succeed(f"test -L /nix/var/nix/profiles/system-{alt_gen}-link")
+
+        # Sem --execute: não pode apagar nada.
+        out = machine.succeed(as_user("alice", "zelador-core clean --keep-system 0 --keep-days 0 --no-links 2>&1"))
+        assert f"[{alt_gen}" in out or f" {alt_gen}" in out, out
+        assert "nada foi alterado" in out, out
+        machine.succeed(f"test -L /nix/var/nix/profiles/system-{alt_gen}-link")
+
+        # --execute exige --yes.
+        status, out = machine.execute(as_user("alice", "zelador-core clean --keep-system 0 --keep-days 0 --no-links --execute 2>&1"))
+        assert status != 0 and "--yes" in out, (status, out)
+        machine.succeed(f"test -L /nix/var/nix/profiles/system-{alt_gen}-link")
+
+        out = machine.succeed(as_user("alice", "zelador-core clean --keep-system 0 --keep-days 0 --no-links --execute --yes 2>&1"))
+        assert "excluindo gerações do sistema" in out and "coletando lixo do store" in out and "Concluído" in out, out
+        machine.fail(f"test -e /nix/var/nix/profiles/system-{alt_gen}-link")
+        # A em uso e a padrão do boot continuam.
+        machine.succeed(f"test -L /nix/var/nix/profiles/system-{orig_gen}-link")
+        assert machine.succeed("readlink -f /nix/var/nix/profiles/system").strip() == original
 
     with subtest("sem instalação Flatpak de sistema, flatpak-remove-unused é recusado"):
         status, out = machine.execute(as_user("alice", f"{pkexec} {helper} flatpak-remove-unused 2>&1"))

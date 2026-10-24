@@ -120,7 +120,7 @@ pub struct StoreStatus {
     pub gc: Option<GcEstimate>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct SystemStatus {
     pub nixos_version: Option<String>,
     pub generations: Vec<Generation>,

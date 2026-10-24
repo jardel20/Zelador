@@ -4,6 +4,13 @@
 {
   programs.zelador.enable = true;
 
+  # O `zelador-core` usa `nix path-info`/`nix store`, que exigem a nova CLI. O sistema real do
+  # usuário já a habilita.
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
+
   users.users.alice = {
     isNormalUser = true;
     password = "alice";

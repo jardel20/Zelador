@@ -68,6 +68,25 @@ pub fn validate(request: &Request, roots: &Roots, tools: &Tools) -> Result<Plan,
             let running = validate_system_path(&running, roots)?;
             steps.push(switch(tools, &running, Mode::Boot));
         }
+        Request::Clean(clean) => {
+            // Cada parte é validada como o subcomando avulso equivalente; a ordem é fixa.
+            let mut parts = Vec::new();
+            if !clean.generations.is_empty() {
+                parts.push(Request::DeleteGenerations(clean.generations.clone()));
+            }
+            if clean.flatpak {
+                parts.push(Request::FlatpakRemoveUnused);
+            }
+            if clean.gc {
+                parts.push(Request::Gc);
+            }
+            if clean.optimise {
+                parts.push(Request::Optimise);
+            }
+            for part in &parts {
+                steps.extend(validate(part, roots, tools)?.steps);
+            }
+        }
         Request::Gc => steps.push(step(&tools.nix_store, vec!["--gc".into()])),
         Request::Optimise => steps.push(step(&tools.nix_store, vec!["--optimise".into()])),
         Request::FlatpakRemoveUnused => {

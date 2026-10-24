@@ -29,6 +29,8 @@ pub struct RootCandidate {
 pub struct ForgottenRoot {
     /// O próprio link, ou a pasta `.direnv` que agrupa vários.
     pub path: PathBuf,
+    /// Os links simbólicos que mantêm os caminhos vivos (um, ou vários dentro de `.direnv`).
+    pub links: Vec<PathBuf>,
     pub store_paths: Vec<PathBuf>,
     pub age_days: i64,
     /// Desmarcado por padrão quando criado há menos de 1 dia.
@@ -37,7 +39,7 @@ pub struct ForgottenRoot {
 
 /// Filtra e agrupa os candidatos. `.direnv` vira uma linha só, com a idade do link mais novo.
 pub fn forgotten_roots(candidates: &[RootCandidate], home: &Path, now: i64) -> Vec<ForgottenRoot> {
-    let mut groups: BTreeMap<PathBuf, (Vec<PathBuf>, i64)> = BTreeMap::new();
+    let mut groups: BTreeMap<PathBuf, (Vec<PathBuf>, Vec<PathBuf>, i64)> = BTreeMap::new();
     for candidate in candidates {
         let Ok(relative) = candidate.link.strip_prefix(home) else {
             continue;
@@ -46,16 +48,20 @@ pub fn forgotten_roots(candidates: &[RootCandidate], home: &Path, now: i64) -> V
             continue;
         }
         let key = direnv_dir(&candidate.link).unwrap_or_else(|| candidate.link.clone());
-        let entry = groups.entry(key).or_insert((Vec::new(), i64::MIN));
-        entry.0.push(candidate.store_path.clone());
-        entry.1 = entry.1.max(candidate.mtime);
+        let entry = groups
+            .entry(key)
+            .or_insert((Vec::new(), Vec::new(), i64::MIN));
+        entry.0.push(candidate.link.clone());
+        entry.1.push(candidate.store_path.clone());
+        entry.2 = entry.2.max(candidate.mtime);
     }
     groups
         .into_iter()
-        .map(|(path, (store_paths, newest))| {
+        .map(|(path, (links, store_paths, newest))| {
             let age = (now - newest).max(0);
             ForgottenRoot {
                 path,
+                links,
                 store_paths,
                 age_days: age / SECONDS_PER_DAY,
                 selected_by_default: age >= SECONDS_PER_DAY,
@@ -139,6 +145,7 @@ mod tests {
             .find(|r| r.path == Path::new("/home/u/src/app/.direnv"))
             .unwrap();
         assert_eq!(direnv.store_paths.len(), 2);
+        assert_eq!(direnv.links.len(), 2);
         assert_eq!(direnv.age_days, 40);
         let recent = roots
             .iter()

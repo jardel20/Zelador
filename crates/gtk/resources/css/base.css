@@ -279,3 +279,41 @@ buttoncontent label {
 .seg-group > .seg-button:hover:not(:checked) {
   background: @zel_hover;
 }
+
+/* ── Fase 5: cartões de opção ───────────────────────────────────────────── */
+.option-card {
+  padding: 18px;
+  border: 1px solid @zel_btn_border;
+  border-radius: 12px;
+  background: @zel_surface;
+}
+
+.option-card.on {
+  padding: 17px;
+  border: 2px solid @zel_primary;
+  background: @zel_sel_card;
+}
+
+.option-title {
+  font-weight: 500;
+}
+
+.option-card .size {
+  font-weight: 600;
+}
+
+spinbutton.num {
+  min-width: 64px;
+}
+
+.step-pending {
+  color: @zel_text_muted;
+}
+
+.step-done {
+  color: @zel_primary;
+}
+
+.zelador-bottom-bar label.strong {
+  font-weight: 600;
+}

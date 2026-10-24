@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Captura cada tela do app num compositor Wayland sem tela (cage headless), para comparar
 # com design/mockups/. Não abre janelas na sua sessão.
-# Uso: [ESPERA=segundos] [ZELADOR_DEV_ACTION=select-two|compare|why] [ZELADOR_SCROLL_END_AFTER=segundos] [ZELADOR_FLAKE=/etc/nixos] [ESQUEMA=prefer-dark] [TEMA_SISTEMA=1] [PAGINAS="seu-sistema geracoes"] \
+# Uso: [ESPERA=segundos] [ZELADOR_DEV_ACTION=select-two|compare|why|simulate|confirm-clean] [ZELADOR_SCROLL_END_AFTER=segundos] [ZELADOR_FLAKE=/etc/nixos] [ESQUEMA=prefer-dark] [TEMA_SISTEMA=1] [PAGINAS="seu-sistema geracoes"] \
 #        nix develop path:. -c tools/screenshots.sh <pasta de saída> [binário]
 set -euo pipefail
 out="${1:?pasta de saída}"

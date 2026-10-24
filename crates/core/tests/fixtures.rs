@@ -161,6 +161,9 @@ impl NixBackend for DeadPathsFixture {
     fn flatpak_uninstall_unused(&self, _: &Path, _: &str) -> zelador_core::Result<Option<bool>> {
         unreachable!()
     }
+    fn delete_user_generations(&self, _: &Path, _: &[u64]) -> zelador_core::Result<()> {
+        unreachable!()
+    }
 }
 
 #[test]

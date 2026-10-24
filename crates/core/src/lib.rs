@@ -2,7 +2,9 @@
 //! Não depende de GTK.
 
 pub mod backends;
+pub mod cleanup;
 pub mod diff;
+pub mod disk;
 pub mod error;
 pub mod flake;
 pub mod flatpak;

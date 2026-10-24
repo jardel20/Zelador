@@ -41,6 +41,14 @@ fn recusa_pedidos_malformados() {
     assert_rejected(&["activate", "/nix/store/x-y"]);
     assert_rejected(&["activate", "/nix/store/x-y", "reboot"]);
     assert_rejected(&["activate", "/nix/store/x-y", "boot", "extra"]);
+    // O `clean` agregado só aceita a gramática fixa.
+    assert_rejected(&["clean"]);
+    assert_rejected(&["clean", "--all"]);
+    assert_rejected(&["clean", "--generations"]);
+    assert_rejected(&["clean", "--gc", "--gc"]);
+    assert_rejected(&["clean", "--gc", "extra"]);
+    assert_rejected(&["clean", "--generations", "1", "1", "--gc"]);
+    assert_rejected(&["clean", "--generations", "-1"]);
 }
 
 #[test]
@@ -75,6 +83,20 @@ fn recusa_symlink_para_o_store() {
         dir.path().join("arquivo").to_str().unwrap(),
         "boot",
     ]);
+}
+
+#[test]
+fn clean_nao_exclui_a_geracao_em_uso_nem_com_a_gramatica_correta() {
+    let current = fs::read_link("/nix/var/nix/profiles/system")
+        .ok()
+        .and_then(|target| target.to_str().map(str::to_owned))
+        .and_then(|name| {
+            name.strip_prefix("system-")?
+                .strip_suffix("-link")
+                .map(str::to_owned)
+        })
+        .unwrap_or_else(|| "999999".to_owned());
+    assert_rejected(&["clean", "--generations", &current, "--gc"]);
 }
 
 #[test]
