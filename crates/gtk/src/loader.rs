@@ -105,3 +105,45 @@ pub fn run_in_background<T: Send + 'static>(
         }
     });
 }
+
+/// Roda `work` numa thread e entrega cada evento que ela enviar a `on_event`, na thread
+/// principal, na ordem em que foram enviados. Termina quando `work` termina.
+pub fn stream_in_background<T: Send + 'static>(
+    work: impl FnOnce(async_channel::Sender<T>) + Send + 'static,
+    on_event: impl Fn(T) + 'static,
+) {
+    let (tx, rx) = async_channel::unbounded::<T>();
+    gtk::gio::spawn_blocking(move || work(tx));
+    glib::spawn_future_local(async move {
+        while let Ok(event) = rx.recv().await {
+            on_event(event);
+        }
+    });
+}
+
+type Listener<T> = Box<dyn Fn(&T)>;
+
+/// Barramento simples entre telas: quem publica não conhece quem assina.
+pub struct Bus<T> {
+    listeners: RefCell<Vec<Listener<T>>>,
+}
+
+impl<T> Default for Bus<T> {
+    fn default() -> Self {
+        Self {
+            listeners: RefCell::new(Vec::new()),
+        }
+    }
+}
+
+impl<T> Bus<T> {
+    pub fn subscribe(&self, listener: impl Fn(&T) + 'static) {
+        self.listeners.borrow_mut().push(Box::new(listener));
+    }
+
+    pub fn publish(&self, event: &T) {
+        for listener in self.listeners.borrow().iter() {
+            listener(event);
+        }
+    }
+}

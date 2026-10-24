@@ -317,3 +317,46 @@ spinbutton.num {
 .zelador-bottom-bar label.strong {
   font-weight: 600;
 }
+
+/* ── Fase 6: assistente de atualização ───────────────────────────────────── */
+progressbar.thin trough,
+progressbar.thin progress {
+  min-height: 6px;
+  border-radius: 3px;
+}
+
+progressbar.thin trough {
+  background: @zel_divider;
+}
+
+progressbar.thin progress {
+  background: @zel_primary;
+}
+
+.step-row {
+  padding: 6px 0;
+}
+
+.details-card {
+  padding: 8px 18px;
+  border: 1px solid @zel_border;
+  border-radius: 12px;
+  background: @zel_surface;
+}
+
+.log-view {
+  padding: 10px;
+  margin-top: 8px;
+  border-radius: 6px;
+  background: #2B2B2B;
+  color: #EDEDED;
+}
+
+.input-tag {
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: @zel_warn_bg;
+  color: @zel_warn_text;
+}

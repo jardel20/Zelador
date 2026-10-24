@@ -63,6 +63,19 @@ pkgs.testers.runNixOSTest {
         profile = machine.succeed("readlink -f /nix/var/nix/profiles/system").strip()
         assert profile == original, profile
 
+    with subtest("zelador-core activate: o helper anuncia as etapas e as fases são reconhecidas"):
+        out = machine.succeed(as_user("alice", f"zelador-core activate {original} boot 2>&1"))
+        # Dois passos: registrar a geração (nix-env) e ativar (systemd-run).
+        assert "etapa 1 de 2: nix-env" in out, out
+        assert "etapa 2 de 2: systemd-run" in out, out
+        # As linhas do switch-to-configuration viram fases e vão para o log.
+        assert "fase: UpdatingBootMenu" in out, out
+        assert "Concluído." in out, out
+        # Em `test` não há registro de geração: um passo só.
+        out = machine.succeed(as_user("alice", f"zelador-core activate {alt} test 2>&1"))
+        assert "etapa 1 de 1: systemd-run" in out and "etapa 2" not in out, out
+        machine.succeed(as_user("alice", f"{pkexec} {helper} activate {original} test"))
+
     with subtest("delete-generations recusa a geração em uso e a padrão do boot"):
         gens = machine.succeed("ls /nix/var/nix/profiles | sed -n 's/^system-\\([0-9]*\\)-link$/\\1/p' | sort -n").split()
         boot_gen = [g for g in gens if machine.succeed(f"readlink -f /nix/var/nix/profiles/system-{g}-link").strip() == original][-1]

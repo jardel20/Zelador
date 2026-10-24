@@ -10,6 +10,8 @@ use crate::diff::strip_ansi;
 /// Tipos de atividade (`ActivityType` em `libutil/logging.hh` do Nix).
 pub mod activity {
     pub const FILE_TRANSFER: u32 = 101;
+    /// "copying N paths": contagem de caminhos baixados ou copiados.
+    pub const COPY_PATHS: u32 = 103;
     pub const BUILDS: u32 = 104;
     pub const BUILD: u32 = 105;
     pub const SUBSTITUTE: u32 = 108;
@@ -164,9 +166,8 @@ impl ProgressTracker {
                     let counter = fields_to_counter(fields);
                     match self.kinds.get(id) {
                         Some(&activity::BUILDS) => self.builds = counter,
-                        Some(&activity::FILE_TRANSFER | &activity::SUBSTITUTE) => {
-                            self.downloads = counter;
-                        }
+                        // Contagem de caminhos; cada `FileTransfer` conta bytes de um só arquivo.
+                        Some(&activity::COPY_PATHS) => self.downloads = counter,
                         _ => {}
                     }
                 }
@@ -224,15 +225,68 @@ pub fn extract_build_failure(events: &[NixEvent], log_tail: &[String]) -> Option
         } => Some((msg, file, line)),
         _ => None,
     })?;
-    let details = strip_ansi(msg);
-    let (found_file, found_line) = find_location(&details);
+    let full = strip_ansi(msg);
+    let (found_file, found_line) = find_location(&full);
+    let (headline, details) = focus_on_cause(&full);
     Some(BuildFailure {
-        headline: details.lines().next().unwrap_or_default().trim().to_owned(),
+        headline,
         file: file.clone().or(found_file),
         line: line.or(found_line),
         log_tail: log_tail.to_vec(),
         details,
     })
+}
+
+/// Um erro de avaliação do Nix traz um traço longo e, no fim, a causa depois de uma linha
+/// `error:` própria. Devolve `(título, detalhes)` da causa; sem esse formato, o texto inteiro e
+/// a primeira linha.
+fn focus_on_cause(text: &str) -> (String, String) {
+    let lines: Vec<&str> = text.lines().collect();
+    let first = |lines: &[&str]| {
+        lines
+            .iter()
+            .map(|l| l.trim())
+            .find(|l| !l.is_empty())
+            .unwrap_or_default()
+            .to_owned()
+    };
+    // A última linha que é só `error:`, depois da primeira linha do texto.
+    let marker = lines
+        .iter()
+        .rposition(|l| l.trim() == "error:")
+        .filter(|i| *i > 0);
+    let Some(marker) = marker else {
+        return (first(&lines), text.trim().to_owned());
+    };
+    let cause = &lines[marker + 1..];
+    let details = cause
+        .iter()
+        .map(|l| l.trim_end())
+        .collect::<Vec<_>>()
+        .join("\n");
+    // "Failed assertions:" não diz nada sozinho: o título é o primeiro item da lista.
+    let headline = cause
+        .iter()
+        .map(|l| l.trim().trim_start_matches("- "))
+        .find(|l| !l.is_empty() && !l.eq_ignore_ascii_case("failed assertions:"))
+        .unwrap_or_default()
+        .to_owned();
+    (headline, dedent(&details))
+}
+
+/// Remove a indentação comum das linhas não vazias.
+fn dedent(text: &str) -> String {
+    let indent = text
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| l.len() - l.trim_start().len())
+        .min()
+        .unwrap_or(0);
+    let lines: Vec<&str> = text
+        .lines()
+        .map(|l| l.get(indent..).unwrap_or_else(|| l.trim_start()))
+        .collect();
+    lines.join("\n").trim().to_owned()
 }
 
 /// Procura `at /caminho/arquivo.nix:12:3` e devolve `(arquivo, linha)`.
@@ -266,6 +320,24 @@ fn find_location(text: &str) -> (Option<String>, Option<u32>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn erro_de_build_com_um_so_error_fica_inteiro() {
+        let (headline, details) =
+            focus_on_cause("error: Cannot build 'x.drv'.\n       Reason: boom");
+        assert_eq!(headline, "error: Cannot build 'x.drv'.");
+        assert!(details.contains("Reason: boom"));
+    }
+
+    #[test]
+    fn erro_de_avaliacao_foca_na_causa() {
+        let text = "error:\n       … while calling 'head'\n         at /x.nix:1:1:\n\n       error:\n       Failed assertions:\n       - A opção `a.b' foi removida.\n       - A opção `c.d' foi removida.\n";
+        let (headline, details) = focus_on_cause(text);
+        assert_eq!(headline, "A opção `a.b' foi removida.");
+        assert!(details.starts_with("Failed assertions:"));
+        assert!(details.contains("`c.d'"));
+        assert!(!details.contains("while calling"));
+    }
 
     #[test]
     fn ignora_linhas_comuns() {

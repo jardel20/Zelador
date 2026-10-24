@@ -390,7 +390,7 @@ pub trait PrivilegedHelper {
     fn run(&self, args: &[String]) -> Result<()>;
 }
 
-impl<R: CommandRunner> HelperClient<R> {
+impl<R> HelperClient<R> {
     pub fn new(runner: R, pkexec: PathBuf, helper: PathBuf, policy: PathBuf) -> Self {
         Self {
             runner,
@@ -425,11 +425,22 @@ impl<R: CommandRunner> HelperClient<R> {
     }
 }
 
+impl<R> HelperClient<R> {
+    /// `pkexec <helper> <args...>`, sem repassar o ambiente do usuário.
+    pub fn command(&self, args: &[String]) -> CommandSpec {
+        CommandSpec::new(self.pkexec.to_string_lossy())
+            .arg(self.helper.to_string_lossy())
+            .args(args.iter().cloned())
+    }
+
+    pub fn runner(&self) -> &R {
+        &self.runner
+    }
+}
+
 impl<R: CommandRunner> PrivilegedHelper for HelperClient<R> {
     fn run(&self, args: &[String]) -> Result<()> {
-        let spec = CommandSpec::new(self.pkexec.to_string_lossy())
-            .arg(self.helper.to_string_lossy())
-            .args(args.iter().cloned());
+        let spec = self.command(args);
         self.runner.run(&spec)?.into_stdout(&spec).map(drop)
     }
 }
@@ -795,6 +806,12 @@ mod tests {
             unreachable!()
         }
         fn flatpak_uninstall_unused(&self, _: &Path, _: &str) -> Result<Option<bool>> {
+            unreachable!()
+        }
+        fn flake_update(&self, _: &Path, _: &[String], _: &Path) -> Result<()> {
+            unreachable!()
+        }
+        fn flake_pin(&self, _: &Path, _: &Path, _: &Path, _: &str, _: &str) -> Result<()> {
             unreachable!()
         }
     }

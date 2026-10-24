@@ -1,5 +1,7 @@
 //! Barra lateral: ícone do app, nome e caminho do flake, navegação e versões.
 
+use std::rc::Rc;
+
 use adw::prelude::*;
 use gtk::glib;
 use zelador_core::runner::SystemRunner;
@@ -25,11 +27,24 @@ pub fn build(flake_label: &str, on_select: impl Fn(Page) + 'static) -> Sidebar {
     for page in Page::NAV {
         list.append(&nav_row(page));
     }
-    list.connect_row_selected(move |_, row| {
-        let page = row
-            .and_then(|row| usize::try_from(row.index()).ok())
-            .and_then(|index| Page::NAV.get(index).copied());
-        if let Some(page) = page {
+    // `row-activated` cobre o clique no item já destacado (ex.: voltar a "Atualizar" estando
+    // em "Aplicando"); `row-selected` cobre a seleção por teclado e por código.
+    let on_select = Rc::new(on_select);
+    let page_of = |row: &gtk::ListBoxRow| {
+        usize::try_from(row.index())
+            .ok()
+            .and_then(|index| Page::NAV.get(index).copied())
+    };
+    {
+        let on_select = Rc::clone(&on_select);
+        list.connect_row_selected(move |_, row| {
+            if let Some(page) = row.and_then(page_of) {
+                on_select(page);
+            }
+        });
+    }
+    list.connect_row_activated(move |_, row| {
+        if let Some(page) = page_of(row) {
             on_select(page);
         }
     });

@@ -31,7 +31,7 @@ fn run() -> anyhow::Result<()> {
     let mut args = std::env::args().skip(1);
     let command = args.next();
     match command.as_deref() {
-        Some("status" | "space" | "clean") => {}
+        Some("status" | "space" | "clean" | "update" | "activate") => {}
         Some("-h" | "--help") | None => {
             println!("{USAGE}");
             return Ok(());
@@ -41,6 +41,8 @@ fn run() -> anyhow::Result<()> {
     let mut flake = PathBuf::from("/etc/nixos");
     let mut host = None;
     let mut clean = CleanArgs::default();
+    let mut update = UpdateArgs::default();
+    let mut positional: Vec<String> = Vec::new();
     while let Some(arg) = args.next() {
         let number =
             |args: &mut dyn Iterator<Item = String>, name: &str| -> anyhow::Result<usize> {
@@ -68,6 +70,23 @@ fn run() -> anyhow::Result<()> {
             "--optimise" if command.as_deref() == Some("clean") => clean.optimise = true,
             "--execute" if command.as_deref() == Some("clean") => clean.execute = true,
             "--yes" if command.as_deref() == Some("clean") => clean.yes = true,
+            "--input" if command.as_deref() == Some("update") => {
+                update
+                    .inputs
+                    .push(args.next().context("--input pede um nome")?);
+            }
+            "--pin" if command.as_deref() == Some("update") => {
+                update
+                    .pins
+                    .push(args.next().context("--pin pede NOME=REV")?);
+            }
+            "--build" if command.as_deref() == Some("update") => update.build = true,
+            "--state-dir" if command.as_deref() == Some("update") => {
+                update.state_dir = Some(args.next().context("--state-dir pede uma pasta")?.into());
+            }
+            other if command.as_deref() == Some("activate") && !other.starts_with("--") => {
+                positional.push(other.to_owned());
+            }
             other => bail!("argumento desconhecido: {other}\n{USAGE}"),
         }
     }
@@ -81,6 +100,12 @@ fn run() -> anyhow::Result<()> {
     }
     if command.as_deref() == Some("clean") {
         return run_clean(&env, &nix, &git, &flatpak, &clean);
+    }
+    if command.as_deref() == Some("update") {
+        return run_update(&env, &nix, &update);
+    }
+    if command.as_deref() == Some("activate") {
+        return run_activate(&positional);
     }
     let result = status::collect(&env, &nix, &git, &flatpak);
     print_status(&env, &result);
@@ -403,5 +428,156 @@ fn run_clean(
         format_bytes(before),
         format_bytes(after)
     );
+    Ok(())
+}
+
+#[derive(Default)]
+struct UpdateArgs {
+    inputs: Vec<String>,
+    pins: Vec<String>,
+    build: bool,
+    state_dir: Option<PathBuf>,
+}
+
+/// Prepara o lock novo (e opcionalmente constrói). Nunca altera o `flake.lock`.
+fn run_update(
+    env: &StatusEnv,
+    nix: &CliNix<SystemRunner>,
+    args: &UpdateArgs,
+) -> anyhow::Result<()> {
+    use zelador_core::backends::{BuildRequest, NixBuild};
+    use zelador_core::build::{BuildOutcome, run_build};
+    use zelador_core::flake::{parse_flake_lock, pin_reference};
+    use zelador_core::runner::CancelToken;
+    use zelador_core::update::{Pin, UpdateWorkspace, prepare_lock, summarize_update};
+
+    let workspace = args
+        .state_dir
+        .as_ref()
+        .map_or_else(|| UpdateWorkspace::default_for(env), UpdateWorkspace::new);
+    let current = std::fs::read_to_string(env.flake.join("flake.lock")).context("flake.lock")?;
+    let inputs = parse_flake_lock(&current)?;
+    let mut pins = Vec::new();
+    for pin in &args.pins {
+        let (name, rev) = pin.split_once('=').context("--pin pede NOME=REV")?;
+        let input = inputs
+            .iter()
+            .find(|i| i.name == name)
+            .with_context(|| format!("input `{name}` não existe"))?;
+        let flake_ref = pin_reference(input, rev).with_context(|| {
+            format!("não dá para fixar `{name}` nessa revisão (use os 40 caracteres)")
+        })?;
+        pins.push(Pin {
+            input: name.to_owned(),
+            flake_ref,
+        });
+    }
+    let selected = if args.inputs.is_empty() && pins.is_empty() {
+        inputs.iter().map(|i| i.name.clone()).collect()
+    } else {
+        args.inputs.clone()
+    };
+    let prepared =
+        prepare_lock(nix, &env.flake, &workspace, &selected, &pins).context("preparar o lock")?;
+    println!(
+        "Lock novo em {} (o flake.lock não foi tocado)",
+        workspace.new_lock().display()
+    );
+    if prepared.changes.is_empty() {
+        println!("Nenhum input mudou de revisão.");
+    }
+    for change in &prepared.changes {
+        println!("  {:<16} {}", change.name, change.label());
+    }
+    if !args.build {
+        return Ok(());
+    }
+
+    let request = BuildRequest {
+        flake: env.flake.clone(),
+        host: env.host.clone(),
+        out_link: workspace.out_link(),
+        reference_lock: Some(workspace.new_lock()),
+    };
+    let cancel = CancelToken::new();
+    println!("Construindo...");
+    let mut last = String::new();
+    let outcome = run_build(
+        &SystemRunner,
+        &NixBuild,
+        &request,
+        &cancel,
+        &mut |progress| {
+            let line = format!(
+                "  {:?} · builds {}/{} · downloads {}/{}",
+                progress.phase,
+                progress.builds.done,
+                progress.builds.expected,
+                progress.downloads.done,
+                progress.downloads.expected
+            );
+            if line != last {
+                println!("{line}");
+                last = line;
+            }
+        },
+    )?;
+    match outcome {
+        BuildOutcome::Built { out_path } => {
+            println!("Construído: {}", out_path.display());
+            let summary = summarize_update(
+                nix,
+                &env.current_system
+                    .canonicalize()
+                    .unwrap_or(env.current_system.clone()),
+                &out_path,
+                &prepared.changes,
+            )?;
+            println!(
+                "Mudanças: {} atualizados, {} novos, {} removidos; tamanho {:+} bytes; kernel mudou: {:?}",
+                summary.totals.updated,
+                summary.totals.added,
+                summary.totals.removed,
+                summary.size_delta.unwrap_or(0),
+                summary.kernel_changed
+            );
+            Ok(())
+        }
+        BuildOutcome::Cancelled => bail!("cancelado"),
+        BuildOutcome::Failed(failure) => {
+            println!("O build falhou: {}", failure.headline);
+            println!("{}", failure.details);
+            bail!("build falhou")
+        }
+    }
+}
+
+fn run_activate(positional: &[String]) -> anyhow::Result<()> {
+    use zelador_core::apply::{ActivationEvent, ApplyMode};
+    use zelador_core::cleanup::HelperClient;
+
+    let [path, mode] = positional else {
+        bail!("uso: zelador-core activate <caminho-do-store> <boot|switch|test>");
+    };
+    let mode = match mode.as_str() {
+        "boot" => ApplyMode::Boot,
+        "switch" => ApplyMode::Switch,
+        "test" => ApplyMode::Test,
+        other => bail!("modo inválido: {other}"),
+    };
+    let helper = HelperClient::production(SystemRunner);
+    if let Err(issue) = helper.check() {
+        bail!("o helper privilegiado não está disponível: {issue:?}");
+    }
+    helper
+        .activate(std::path::Path::new(path), mode, &mut |event| match event {
+            ActivationEvent::Step(marker) => {
+                println!("etapa {} de {}: {}", marker.step, marker.of, marker.program)
+            }
+            ActivationEvent::Stage(stage) => println!("fase: {stage:?}"),
+            ActivationEvent::Log(line) => println!("  {line}"),
+        })
+        .context("ativação")?;
+    println!("Concluído.");
     Ok(())
 }

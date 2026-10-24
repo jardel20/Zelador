@@ -9,11 +9,35 @@ use zelador_core::backends::{CliFlatpak, CliGit, CliNix, NixBackend};
 use zelador_core::runner::SystemRunner;
 use zelador_core::status::{StatusEnv, SystemStatus, collect_overview};
 
-use crate::loader::Shared;
+use crate::loader::{Bus, Shared};
 use crate::pages::Page;
 
 /// Troca a tela mostrada (e o item destacado na barra lateral).
 type Navigate = Rc<dyn Fn(Page)>;
+
+/// O que a tela "Aplicando" mostra; publicado pelo assistente "Atualizar".
+#[derive(Debug, Clone)]
+pub enum ApplyEvent {
+    Started {
+        mode: zelador_core::apply::ApplyMode,
+        /// Horário de início (`14:32`).
+        at: String,
+        /// Quanto durou o build, se houve.
+        build_duration: Option<String>,
+        /// Número da geração em uso antes da ativação.
+        previous_generation: Option<u64>,
+        /// Se o `flake.lock` será gravado ao fim.
+        writes_lock: bool,
+    },
+    Step {
+        step: u32,
+        of: u32,
+    },
+    Stage(zelador_core::apply::ActivationStage),
+    Log(String),
+    LockWritten,
+    Finished(Result<(), String>),
+}
 
 pub struct Ctx {
     pub env: StatusEnv,
@@ -26,6 +50,7 @@ pub struct Ctx {
     pub sizes: Rc<Shared<Result<HashMap<String, u64>, String>>>,
     /// Caminhos que o GC apagaria (cerca de 10 s).
     pub dead: Rc<Shared<Result<HashSet<String>, String>>>,
+    pub apply_events: Bus<ApplyEvent>,
 }
 
 pub fn nix() -> CliNix<SystemRunner> {
@@ -59,6 +84,7 @@ impl Ctx {
             overview,
             sizes,
             dead,
+            apply_events: Bus::default(),
         })
     }
 

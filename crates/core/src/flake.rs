@@ -106,16 +106,29 @@ struct RawOriginal {
 pub fn parse_flake_metadata(json: &str) -> Result<FlakeMetadata> {
     let raw: RawMetadata =
         serde_json::from_str(json).map_err(|e| Error::json("flake metadata", e))?;
-    let root_name = raw.locks.root.as_deref().unwrap_or("root");
-    let root = raw
-        .locks
+    Ok(FlakeMetadata {
+        inputs: inputs_from_locks(&raw.locks)?,
+        revision: raw.revision,
+        dirty_revision: raw.dirty_revision,
+    })
+}
+
+/// Inputs de um arquivo `flake.lock` (o formato do arquivo, sem o envelope do `flake metadata`).
+pub fn parse_flake_lock(json: &str) -> Result<Vec<FlakeInput>> {
+    let locks: RawLocks = serde_json::from_str(json).map_err(|e| Error::json("flake.lock", e))?;
+    inputs_from_locks(&locks)
+}
+
+fn inputs_from_locks(locks: &RawLocks) -> Result<Vec<FlakeInput>> {
+    let root_name = locks.root.as_deref().unwrap_or("root");
+    let root = locks
         .nodes
         .get(root_name)
-        .ok_or_else(|| Error::parse("flake metadata", "nó raiz ausente em locks.nodes"))?;
+        .ok_or_else(|| Error::parse("flake.lock", "nó raiz ausente em nodes"))?;
 
     let mut inputs = Vec::new();
     for (name, target) in &root.inputs {
-        let Some(node) = resolve(&raw.locks.nodes, root_name, target, 0) else {
+        let Some(node) = resolve(&locks.nodes, root_name, target, 0) else {
             continue;
         };
         let locked = node.locked.as_ref();
@@ -136,11 +149,73 @@ pub fn parse_flake_metadata(json: &str) -> Result<FlakeMetadata> {
             last_modified: locked.and_then(|l| l.last_modified),
         });
     }
-    Ok(FlakeMetadata {
-        inputs,
-        revision: raw.revision,
-        dirty_revision: raw.dirty_revision,
-    })
+    Ok(inputs)
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InputChange {
+    pub name: String,
+    pub old_rev: Option<String>,
+    pub new_rev: Option<String>,
+    pub old_last_modified: Option<i64>,
+    pub new_last_modified: Option<i64>,
+}
+
+impl InputChange {
+    fn short(rev: &Option<String>) -> String {
+        rev.as_deref()
+            .map_or_else(|| "?".to_owned(), |r| r.get(..7).unwrap_or(r).to_owned())
+    }
+
+    /// `8f3c1a2 → 02c087f`.
+    pub fn label(&self) -> String {
+        format!(
+            "{} → {}",
+            Self::short(&self.old_rev),
+            Self::short(&self.new_rev)
+        )
+    }
+}
+
+/// Inputs cuja revisão mudou entre dois locks (ou que apareceram ou sumiram).
+pub fn diff_inputs(before: &[FlakeInput], after: &[FlakeInput]) -> Vec<InputChange> {
+    let mut changes = Vec::new();
+    for new in after {
+        let old = before.iter().find(|i| i.name == new.name);
+        if old.is_none_or(|old| old.rev != new.rev) {
+            changes.push(InputChange {
+                name: new.name.clone(),
+                old_rev: old.and_then(|o| o.rev.clone()),
+                new_rev: new.rev.clone(),
+                old_last_modified: old.and_then(|o| o.last_modified),
+                new_last_modified: new.last_modified,
+            });
+        }
+    }
+    changes
+}
+
+/// Referência de flake que fixa `input` em `rev`, para `--override-input`.
+/// `None` quando o tipo do input não permite (ex.: `path`, `tarball`) ou a revisão é inválida.
+pub fn pin_reference(input: &FlakeInput, rev: &str) -> Option<String> {
+    // Só hexadecimal completo: a revisão entra numa referência de flake.
+    if rev.len() != 40 || !rev.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return None;
+    }
+    let source = input.source.as_deref()?;
+    match input.kind.as_str() {
+        kind @ ("github" | "gitlab" | "sourcehut")
+            if source.contains('/') && !source.contains("://") =>
+        {
+            Some(format!("{kind}:{source}/{rev}"))
+        }
+        "git" => {
+            let url = source.strip_prefix("git+").unwrap_or(source);
+            (url.contains("://") && !url.contains(['?', '#', ' ']))
+                .then(|| format!("git+{url}?rev={rev}"))
+        }
+        _ => None,
+    }
 }
 
 /// Segue um input até o nó travado. O alvo é o nome de um nó ou um caminho
@@ -176,6 +251,83 @@ fn resolve<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn fixture(name: &str) -> String {
+        std::fs::read_to_string(format!(
+            "{}/tests/fixtures/{name}",
+            env!("CARGO_MANIFEST_DIR")
+        ))
+        .unwrap()
+    }
+
+    #[test]
+    fn locks_reais_antes_depois_do_update_e_do_pin() {
+        let before = parse_flake_lock(&fixture("lock-before.json")).unwrap();
+        let after = parse_flake_lock(&fixture("lock-after-update.json")).unwrap();
+        let pinned = parse_flake_lock(&fixture("lock-after-pin.json")).unwrap();
+
+        // O update real mexeu só em dois inputs.
+        let changes = diff_inputs(&before, &after);
+        let names: Vec<_> = changes.iter().map(|c| c.name.as_str()).collect();
+        assert_eq!(names, ["home-manager", "nixpkgs"]);
+        let nixpkgs = changes.iter().find(|c| c.name == "nixpkgs").unwrap();
+        assert_eq!(nixpkgs.label(), "02c087f → 3ec6363");
+        assert!(nixpkgs.new_last_modified > nixpkgs.old_last_modified);
+
+        // Fixar o nixpkgs na revisão antiga o tira da lista de mudanças; o resto continua.
+        let after_pin = diff_inputs(&before, &pinned);
+        assert_eq!(
+            after_pin
+                .iter()
+                .map(|c| c.name.as_str())
+                .collect::<Vec<_>>(),
+            ["home-manager"]
+        );
+        // E nada muda de um lock para ele mesmo.
+        assert!(diff_inputs(&before, &before).is_empty());
+    }
+
+    #[test]
+    fn referencia_de_fixacao() {
+        let github = FlakeInput {
+            name: "nixpkgs".into(),
+            kind: "github".into(),
+            reference: Some("nixos-unstable".into()),
+            source: Some("NixOS/nixpkgs".into()),
+            rev: None,
+            last_modified: None,
+        };
+        let rev = "02c087f3fe673c9e317f206a627cb6b910336dbe";
+        assert_eq!(
+            pin_reference(&github, rev).as_deref(),
+            Some("github:NixOS/nixpkgs/02c087f3fe673c9e317f206a627cb6b910336dbe")
+        );
+        // Revisão curta, com lixo ou com injeção de referência: recusada.
+        for bad in [
+            "02c087f",
+            "",
+            &rev.replace('0', "g"),
+            &format!("{rev}?dir=x"),
+            "../../x",
+        ] {
+            assert_eq!(pin_reference(&github, bad), None, "{bad:?}");
+        }
+        let git = FlakeInput {
+            kind: "git".into(),
+            source: Some("git+https://example.org/r.git".into()),
+            ..github.clone()
+        };
+        assert_eq!(
+            pin_reference(&git, rev).as_deref(),
+            Some("git+https://example.org/r.git?rev=02c087f3fe673c9e317f206a627cb6b910336dbe")
+        );
+        let path = FlakeInput {
+            kind: "path".into(),
+            source: Some("/etc/x".into()),
+            ..github
+        };
+        assert_eq!(pin_reference(&path, rev), None);
+    }
 
     const FOLLOWS: &str = r#"{
       "locks": {"root":"root","version":7,"nodes":{

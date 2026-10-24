@@ -1,21 +1,13 @@
-//! Barra inferior fixa das telas de fluxo: branca, com borda superior.
+//! Barras inferiores fixas das telas de fluxo: brancas, com borda superior.
+//!
+//! Todas são montadas pela própria tela, porque dependem do estado dela (a de "Atualizar"
+//! muda por etapa, a de "Liberar espaço" mostra o total estimado, a de "Gerações" aparece com
+//! seleção). Aqui ficam só as peças comuns.
 
 use gtk::prelude::*;
 
-use crate::i18n::tr;
-use crate::pages::Page;
-
-/// Barra de cada tela de fluxo, ou `None` nas telas de leitura.
-pub fn for_page(page: Page) -> Option<gtk::Widget> {
-    match page {
-        Page::Atualizar => Some(wizard_bar()),
-        Page::Aplicando => Some(applying_bar()),
-        // A barra de "Liberar espaço" é dinâmica e vive em `screens::liberar`.
-        Page::LiberarEspaco | Page::SeuSistema | Page::Geracoes | Page::EspacoEmDisco => None,
-    }
-}
-
-fn shell() -> gtk::Box {
+/// A moldura da barra: horizontal, com a classe que dá fundo e borda.
+pub fn shell() -> gtk::Box {
     gtk::Box::builder()
         .orientation(gtk::Orientation::Horizontal)
         .spacing(12)
@@ -23,55 +15,7 @@ fn shell() -> gtk::Box {
         .build()
 }
 
-fn spacer() -> gtk::Widget {
+/// Espaço elástico entre os grupos de botões.
+pub fn spacer() -> gtk::Widget {
     gtk::Box::builder().hexpand(true).build().upcast()
-}
-
-fn button(label: &str, classes: &[&str]) -> gtk::Button {
-    let button = gtk::Button::builder()
-        .label(label)
-        .css_classes(classes.to_vec())
-        .sensitive(false)
-        .build();
-    button.set_valign(gtk::Align::Center);
-    button
-}
-
-/// "Voltar", pontos de progresso e "Aplicar" (etapa 3 de 3).
-fn wizard_bar() -> gtk::Widget {
-    let bar = shell();
-    bar.append(&button(&tr("Voltar"), &[]));
-    bar.append(&spacer());
-    let dots = gtk::Box::builder()
-        .orientation(gtk::Orientation::Horizontal)
-        .spacing(8)
-        .valign(gtk::Align::Center)
-        .build();
-    for step in 0..3 {
-        let dot = gtk::Box::builder()
-            .css_classes(if step == 2 {
-                vec!["dot", "dot-active"]
-            } else {
-                vec!["dot"]
-            })
-            .build();
-        dots.append(&dot);
-    }
-    bar.append(&dots);
-    bar.append(&spacer());
-    bar.append(&button(&tr("Aplicar"), &["suggested-action"]));
-    bar.upcast()
-}
-
-fn applying_bar() -> gtk::Widget {
-    let bar = shell();
-    bar.append(
-        &gtk::Label::builder()
-            .label(tr("Iniciado às --:--"))
-            .css_classes(["caption-text"])
-            .build(),
-    );
-    bar.append(&spacer());
-    bar.append(&button(&tr("Concluir"), &[]));
-    bar.upcast()
 }

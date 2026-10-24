@@ -9,7 +9,6 @@ use adw::prelude::*;
 use gtk::{gio, glib};
 use zelador_core::backends::NixBackend;
 use zelador_core::cleanup::{HelperClient, HelperIssue, PrivilegedHelper};
-use zelador_core::diff::{DiffEntry, summarize};
 use zelador_core::generations::{Generation, GenerationKind, generation_sizes};
 use zelador_core::runner::SystemRunner;
 use zelador_core::units::format_bytes;
@@ -735,130 +734,10 @@ fn show_compare(ui: &Rc<Ui>) {
             _ => return,
         }
     };
-    let dialog = adw::Dialog::builder()
-        .title(format!(
-            "{} {} → {}",
-            tr("Geração"),
-            older.number,
-            newer.number
-        ))
-        .content_width(560)
-        .content_height(560)
-        .build();
-    let toolbar = adw::ToolbarView::new();
-    toolbar.add_top_bar(&adw::HeaderBar::new());
-    let body = gtk::Box::builder()
-        .orientation(gtk::Orientation::Vertical)
-        .spacing(14)
-        .margin_top(6)
-        .margin_bottom(18)
-        .margin_start(18)
-        .margin_end(18)
-        .build();
-    let summary = gtk::Label::builder()
-        .label(tr("Comparando…"))
-        .xalign(0.0)
-        .wrap(true)
-        .css_classes(["section-title"])
-        .build();
-    let list = gtk::ListBox::builder()
-        .selection_mode(gtk::SelectionMode::None)
-        .css_classes(["boxed-list"])
-        .build();
-    let scroll = gtk::ScrolledWindow::builder()
-        .vexpand(true)
-        .hscrollbar_policy(gtk::PolicyType::Never)
-        .child(&list)
-        .build();
-    body.append(&summary);
-    body.append(&scroll);
-    toolbar.set_content(Some(&body));
-    dialog.set_child(Some(&toolbar));
-    dialog.present(ui.ctx.window().as_ref());
-
-    let (old_path, new_path) = (
+    crate::widgets::diff::present(
+        ui.ctx.window().as_ref(),
+        format!("{} {} → {}", tr("Geração"), older.number, newer.number),
         older.store_path.to_string_lossy().into_owned(),
         newer.store_path.to_string_lossy().into_owned(),
     );
-    run_in_background(
-        move || {
-            nix()
-                .diff_closures(&old_path, &new_path)
-                .map_err(|e| e.to_string())
-        },
-        move |result| match result {
-            Ok(entries) => fill_diff(&summary, &list, &entries),
-            Err(error) => {
-                summary.set_label(&format!("{} {error}", tr("Não foi possível comparar:")))
-            }
-        },
-    );
-}
-
-fn fill_diff(summary: &gtk::Label, list: &gtk::ListBox, entries: &[DiffEntry]) {
-    let totals = summarize(entries);
-    let delta = if totals.size_delta >= 0 {
-        format!(
-            "o sistema vai ocupar {} a mais",
-            format_bytes(totals.size_delta.unsigned_abs())
-        )
-    } else {
-        format!(
-            "o sistema vai ocupar {} a menos",
-            format_bytes(totals.size_delta.unsigned_abs())
-        )
-    };
-    summary.set_label(&format!(
-        "{} atualizados, {} novos e {} removidos · {delta}",
-        totals.updated, totals.added, totals.removed
-    ));
-    let mut changed: Vec<&DiffEntry> = entries
-        .iter()
-        .filter(|e| e.is_updated() || e.is_added() || e.is_removed())
-        .collect();
-    changed.sort_by(|a, b| a.name.cmp(&b.name));
-    if changed.is_empty() {
-        list.append(
-            &gtk::ListBoxRow::builder()
-                .child(
-                    &gtk::Label::builder()
-                        .label(tr("Nenhuma mudança de versão entre as duas gerações."))
-                        .css_classes(["caption-text"])
-                        .margin_top(18)
-                        .margin_bottom(18)
-                        .build(),
-                )
-                .activatable(false)
-                .build(),
-        );
-        return;
-    }
-    for entry in changed {
-        list.append(&diff_row(entry));
-    }
-}
-
-fn diff_row(entry: &DiffEntry) -> adw::ActionRow {
-    let versions = |v: &Option<Vec<String>>| match v {
-        Some(v) if v.iter().all(String::is_empty) => "—".to_owned(),
-        Some(v) => v.join(", "),
-        None => "∅".to_owned(),
-    };
-    let row = rows::row(
-        &entry.name,
-        Some(&format!(
-            "{} → {}",
-            versions(&entry.old),
-            versions(&entry.new)
-        )),
-        true,
-    );
-    if let Some(delta) = entry.size_delta {
-        let sign = if delta < 0 { "−" } else { "+" };
-        row.add_suffix(&rows::suffix_label(
-            &format!("{sign}{}", format_bytes(delta.unsigned_abs())),
-            &["caption-text"],
-        ));
-    }
-    row
 }

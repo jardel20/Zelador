@@ -51,6 +51,18 @@ pub trait NixBackend {
     fn flatpak_uninstall_unused(&self, flake: &Path, host: &str) -> Result<Option<bool>>;
     /// Apaga gerações de um perfil do usuário (Home Manager), sem privilégio.
     fn delete_user_generations(&self, profile: &Path, numbers: &[u64]) -> Result<()>;
+    /// Atualiza `inputs` (todos, se a lista for vazia) escrevendo o resultado em `output_lock`;
+    /// o `flake.lock` do flake não é tocado.
+    fn flake_update(&self, flake: &Path, inputs: &[String], output_lock: &Path) -> Result<()>;
+    /// Fixa `input` em `flake_ref` partindo de `reference_lock`, escrevendo em `output_lock`.
+    fn flake_pin(
+        &self,
+        flake: &Path,
+        reference_lock: &Path,
+        output_lock: &Path,
+        input: &str,
+        flake_ref: &str,
+    ) -> Result<()>;
 }
 
 #[derive(Debug, Clone)]
@@ -157,6 +169,36 @@ impl<R: CommandRunner> NixBackend for CliNix<R> {
             gc: raw.gc,
             optimise: raw.optimise,
         })
+    }
+
+    fn flake_update(&self, flake: &Path, inputs: &[String], output_lock: &Path) -> Result<()> {
+        let spec = nix()
+            .args(["flake", "update", "--flake"])
+            .arg(flake.to_string_lossy())
+            .arg("--output-lock-file")
+            .arg(output_lock.to_string_lossy())
+            .args(inputs.iter().cloned());
+        self.runner.run(&spec)?.into_stdout(&spec).map(drop)
+    }
+
+    fn flake_pin(
+        &self,
+        flake: &Path,
+        reference_lock: &Path,
+        output_lock: &Path,
+        input: &str,
+        flake_ref: &str,
+    ) -> Result<()> {
+        // `nix flake lock` recebe o flake como argumento posicional (não tem `--flake`).
+        let spec = nix()
+            .args(["flake", "lock"])
+            .arg(flake.to_string_lossy())
+            .arg("--reference-lock-file")
+            .arg(reference_lock.to_string_lossy())
+            .args(["--override-input", input, flake_ref])
+            .arg("--output-lock-file")
+            .arg(output_lock.to_string_lossy());
+        self.runner.run(&spec)?.into_stdout(&spec).map(drop)
     }
 
     fn delete_user_generations(&self, profile: &Path, numbers: &[u64]) -> Result<()> {
@@ -325,8 +367,11 @@ impl<R: CommandRunner> FlatpakBackend for CliFlatpak<R> {
 pub struct BuildRequest {
     pub flake: PathBuf,
     pub host: String,
-    /// Onde o `nixos-rebuild` cria o link `result`; fora da pasta do flake.
-    pub workdir: PathBuf,
+    /// Link de saída do build (uma raiz do GC até ser descartado ou aplicado). Fica na pasta de
+    /// estado do app, nunca na do flake.
+    pub out_link: PathBuf,
+    /// Lock alternativo: constrói com ele sem alterar o `flake.lock`.
+    pub reference_lock: Option<PathBuf>,
 }
 
 pub trait RebuildBackend {
@@ -334,17 +379,29 @@ pub trait RebuildBackend {
     fn build_command(&self, request: &BuildRequest) -> CommandSpec;
 }
 
+/// `nix build` direto no `toplevel`. O `nixos-rebuild build` reexecuta a si mesmo a partir da
+/// nova nixpkgs, o que dispara builds extras e esconde o progresso.
 #[derive(Debug, Clone, Copy, Default)]
-pub struct NixosRebuild;
+pub struct NixBuild;
 
-impl RebuildBackend for NixosRebuild {
+impl RebuildBackend for NixBuild {
     fn build_command(&self, request: &BuildRequest) -> CommandSpec {
-        CommandSpec::new("nixos-rebuild")
+        let mut spec = CommandSpec::new("nix")
             .arg("build")
-            .arg("--flake")
-            .arg(format!("{}#{}", request.flake.display(), request.host))
-            .args(["--log-format", "internal-json", "-v"])
-            .cwd(request.workdir.clone())
+            .arg(format!(
+                "{}#nixosConfigurations.{}.config.system.build.toplevel",
+                request.flake.display(),
+                request.host
+            ))
+            .arg("--out-link")
+            .arg(request.out_link.to_string_lossy())
+            .args(["--print-out-paths", "--log-format", "internal-json", "-v"]);
+        if let Some(lock) = &request.reference_lock {
+            spec = spec
+                .arg("--reference-lock-file")
+                .arg(lock.to_string_lossy());
+        }
+        spec
     }
 }
 
@@ -367,23 +424,98 @@ mod tests {
 
     #[test]
     fn build_nao_ativa_nem_usa_root() {
-        let spec = NixosRebuild.build_command(&BuildRequest {
+        let spec = NixBuild.build_command(&BuildRequest {
             flake: "/etc/nixos".into(),
             host: "nixos".into(),
-            workdir: "/tmp/zelador".into(),
+            out_link: "/s/result".into(),
+            reference_lock: Some("/s/novo.lock".into()),
         });
-        assert_eq!(spec.program, "nixos-rebuild");
+        assert_eq!(spec.program, "nix");
         assert_eq!(
             spec.args,
             [
                 "build",
-                "--flake",
-                "/etc/nixos#nixos",
+                "/etc/nixos#nixosConfigurations.nixos.config.system.build.toplevel",
+                "--out-link",
+                "/s/result",
+                "--print-out-paths",
                 "--log-format",
                 "internal-json",
-                "-v"
+                "-v",
+                "--reference-lock-file",
+                "/s/novo.lock",
             ]
         );
         assert!(!spec.args.iter().any(|a| a == "switch" || a == "--elevate"));
+        // Sem lock alternativo, usa o do flake.
+        let plain = NixBuild.build_command(&BuildRequest {
+            flake: "/etc/nixos".into(),
+            host: "nixos".into(),
+            out_link: "/s/result".into(),
+            reference_lock: None,
+        });
+        assert!(!plain.args.iter().any(|a| a == "--reference-lock-file"));
+    }
+
+    #[test]
+    fn comandos_de_update_e_pin() {
+        use crate::runner::{CommandRunner, Output};
+        use std::cell::RefCell;
+        struct Rec(RefCell<Vec<CommandSpec>>);
+        impl CommandRunner for Rec {
+            fn run(&self, spec: &CommandSpec) -> Result<Output> {
+                self.0.borrow_mut().push(spec.clone());
+                Ok(Output {
+                    stdout: String::new(),
+                    stderr: String::new(),
+                    code: Some(0),
+                })
+            }
+        }
+        let rec = Rec(RefCell::default());
+        let nix = CliNix::new(&rec);
+        nix.flake_update(
+            Path::new("/etc/nixos"),
+            &["nixpkgs".into(), "home-manager".into()],
+            Path::new("/s/novo.lock"),
+        )
+        .unwrap();
+        nix.flake_pin(
+            Path::new("/etc/nixos"),
+            Path::new("/s/novo.lock"),
+            Path::new("/s/pin.lock"),
+            "nixpkgs",
+            "github:NixOS/nixpkgs/abc",
+        )
+        .unwrap();
+        let calls = rec.0.borrow();
+        assert_eq!(
+            calls[0].args,
+            [
+                "flake",
+                "update",
+                "--flake",
+                "/etc/nixos",
+                "--output-lock-file",
+                "/s/novo.lock",
+                "nixpkgs",
+                "home-manager"
+            ]
+        );
+        assert_eq!(
+            calls[1].args,
+            [
+                "flake",
+                "lock",
+                "/etc/nixos",
+                "--reference-lock-file",
+                "/s/novo.lock",
+                "--override-input",
+                "nixpkgs",
+                "github:NixOS/nixpkgs/abc",
+                "--output-lock-file",
+                "/s/pin.lock"
+            ]
+        );
     }
 }

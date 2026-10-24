@@ -33,6 +33,54 @@ impl Executor for ProcessExecutor {
     }
 }
 
+/// Antes de cada passo, escreve `@zelador {"step":i,"of":n,"program":"..."}` em `out` (o stderr),
+/// para o app mostrar o progresso sem interpretar a saída dos programas. Não muda o que roda.
+pub struct AnnouncingExecutor<E, W> {
+    inner: E,
+    out: W,
+    total: usize,
+    done: usize,
+}
+
+impl<E: Executor, W: std::io::Write> AnnouncingExecutor<E, W> {
+    pub fn new(inner: E, out: W, total: usize) -> Self {
+        Self {
+            inner,
+            out,
+            total,
+            done: 0,
+        }
+    }
+}
+
+impl<E: Executor, W: std::io::Write> Executor for AnnouncingExecutor<E, W> {
+    fn run(&mut self, step: &Step) -> io::Result<i32> {
+        self.done += 1;
+        let program = step
+            .program
+            .file_name()
+            .map(|name| name.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        // O nome vem de caminhos fixos do helper; mesmo assim escapa o que o JSON exige.
+        let program: String = program
+            .chars()
+            .flat_map(|c| match c {
+                '"' | '\\' => vec!['\\', c],
+                c if c.is_control() => vec![],
+                c => vec![c],
+            })
+            .collect();
+        // Falha ao anunciar não deve impedir o passo: o marcador é só informação.
+        let _ = writeln!(
+            self.out,
+            "@zelador {{\"step\":{},\"of\":{},\"program\":\"{program}\"}}",
+            self.done, self.total
+        );
+        let _ = self.out.flush();
+        self.inner.run(step)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum Failure {
     /// O processo não pôde ser iniciado.

@@ -22,7 +22,12 @@ impl Context {
         Self {
             flake_label: abbreviate_home(&flake),
             start: crate::start_page_from_env(),
-            env: StatusEnv::detect(flake.into(), std::env::var("ZELADOR_HOST").ok()),
+            env: StatusEnv::detect(
+                flake.into(),
+                std::env::var("ZELADOR_HOST")
+                    .ok()
+                    .filter(|host| !host.is_empty()),
+            ),
         }
     }
 }
@@ -89,15 +94,25 @@ pub fn build(app: &adw::Application, context: &Context) -> adw::ApplicationWindo
 
     ctx.set_navigation({
         let list = sidebar.list.clone();
+        let stack = stack.clone();
         move |page| {
+            // "Aplicando" não tem item próprio: destaca "Atualizar", de onde ela vem.
+            let highlight = if page == Page::Aplicando {
+                Page::Atualizar
+            } else {
+                page
+            };
             if let Some(row) = Page::NAV
                 .iter()
-                .position(|candidate| *candidate == page)
+                .position(|candidate| *candidate == highlight)
                 .and_then(|index| i32::try_from(index).ok())
                 .and_then(|index| list.row_at_index(index))
             {
                 list.select_row(Some(&row));
             }
+            // A seleção só dispara se mudou; mostrar a tela explicitamente cobre o caso de
+            // voltar de "Aplicando" para "Atualizar", que já está destacada.
+            stack.set_visible_child_name(page.id());
         }
     });
     ctx.toasts.set_child(Some(&split));

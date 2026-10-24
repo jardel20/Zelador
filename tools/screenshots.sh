@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Captura cada tela do app num compositor Wayland sem tela (cage headless), para comparar
 # com design/mockups/. Não abre janelas na sua sessão.
-# Uso: [ESPERA=segundos] [ZELADOR_DEV_ACTION=select-two|compare|why|simulate|confirm-clean] [ZELADOR_SCROLL_END_AFTER=segundos] [ZELADOR_FLAKE=/etc/nixos] [ESQUEMA=prefer-dark] [TEMA_SISTEMA=1] [PAGINAS="seu-sistema geracoes"] \
+# Uso: [ESPERA=segundos] [ZELADOR_DEV_ACTION=select-two|compare|why|simulate|confirm-clean|wizard-demo|wizard-update] [ZELADOR_SCROLL_END_AFTER=segundos] [ZELADOR_FLAKE=/etc/nixos] [ESQUEMA=prefer-dark] [TEMA_SISTEMA=1] [PAGINAS="seu-sistema geracoes"] \
 #        nix develop path:. -c tools/screenshots.sh <pasta de saída> [binário]
 set -euo pipefail
 out="${1:?pasta de saída}"
@@ -16,9 +16,9 @@ for page in ${PAGINAS:-seu-sistema atualizar geracoes liberar-espaco espaco-em-d
   fi
   (
     # XDG_CONFIG_HOME vazio: o ~/.config/gtk-4.0/gtk.css do usuário não interfere na captura.
-    export XDG_RUNTIME_DIR="$rt" XDG_CONFIG_HOME="$rt/config" WLR_BACKENDS=headless WLR_RENDERER=pixman \
+    export XDG_RUNTIME_DIR="$rt" XDG_CONFIG_HOME="$rt/config" XDG_STATE_HOME="$rt/state" WLR_BACKENDS=headless WLR_RENDERER=pixman \
       WLR_LIBINPUT_NO_DEVICES=1 GDK_BACKEND=wayland ADW_DEBUG_COLOR_SCHEME="${ESQUEMA:-default}" \
-      ZELADOR_START_PAGE="$page" ZELADOR_FLAKE="${ZELADOR_FLAKE:-$HOME/nixos-config}"
+      ZELADOR_START_PAGE="$page" ZELADOR_FLAKE="${ZELADOR_FLAKE:-$HOME/nixos-config}" ZELADOR_HOST="${ZELADOR_HOST:-}"
     nix shell nixpkgs#cage nixpkgs#grim -c sh -c '
       unset WAYLAND_DISPLAY
       cage -s -- "'"$bin"'" >/dev/null 2>&1 &

@@ -164,6 +164,19 @@ impl NixBackend for DeadPathsFixture {
     fn delete_user_generations(&self, _: &Path, _: &[u64]) -> zelador_core::Result<()> {
         unreachable!()
     }
+    fn flake_update(&self, _: &Path, _: &[String], _: &Path) -> zelador_core::Result<()> {
+        unreachable!()
+    }
+    fn flake_pin(
+        &self,
+        _: &Path,
+        _: &Path,
+        _: &Path,
+        _: &str,
+        _: &str,
+    ) -> zelador_core::Result<()> {
+        unreachable!()
+    }
 }
 
 #[test]

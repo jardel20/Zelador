@@ -1,0 +1,68 @@
+@nix {"action":"msg","level":4,"msg":"evaluating file '«nix-internal»/derivation-internal.nix'"}
+@nix {"action":"start","id":2100784468590592,"level":6,"parent":0,"text":"querying info about missing paths","type":0}
+@nix {"action":"start","fields":["/nix/store/rd2fgj7ay2ab32wyyjd3pwpfk2z48rmp-zelador-ok","https://cache.nixos.org"],"id":2100784468590593,"level":4,"parent":0,"text":"querying info about '/nix/store/rd2fgj7ay2ab32wyyjd3pwpfk2z48rmp-zelador-ok' on 'https://cache.nixos.org'","type":109}
+@nix {"action":"start","fields":["https://cache.nixos.org/rd2fgj7ay2ab32wyyjd3pwpfk2z48rmp.narinfo"],"id":2100784468590594,"level":4,"parent":2100784468590593,"text":"downloading 'https://cache.nixos.org/rd2fgj7ay2ab32wyyjd3pwpfk2z48rmp.narinfo'","type":101}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590594,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590594,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590594,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590594,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590594,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590594,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590594,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590594,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590594,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590594,"type":105}
+@nix {"action":"result","fields":[3,3,0,0],"id":2100784468590594,"type":105}
+@nix {"action":"result","fields":[3,3,0,0],"id":2100784468590594,"type":105}
+@nix {"action":"result","fields":[3,3,0,0],"id":2100784468590594,"type":105}
+@nix {"action":"stop","id":2100784468590593}
+@nix {"action":"stop","id":2100784468590594}
+@nix {"action":"start","fields":["/nix/store/rd2fgj7ay2ab32wyyjd3pwpfk2z48rmp-zelador-ok","https://niri.cachix.org"],"id":2100784468590595,"level":4,"parent":0,"text":"querying info about '/nix/store/rd2fgj7ay2ab32wyyjd3pwpfk2z48rmp-zelador-ok' on 'https://niri.cachix.org'","type":109}
+@nix {"action":"start","fields":["https://niri.cachix.org/rd2fgj7ay2ab32wyyjd3pwpfk2z48rmp.narinfo"],"id":2100784468590596,"level":4,"parent":2100784468590595,"text":"downloading 'https://niri.cachix.org/rd2fgj7ay2ab32wyyjd3pwpfk2z48rmp.narinfo'","type":101}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"result","fields":[15,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"result","fields":[15,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"result","fields":[15,0,0,0],"id":2100784468590596,"type":105}
+@nix {"action":"stop","id":2100784468590595}
+@nix {"action":"stop","id":2100784468590596}
+@nix {"action":"stop","id":2100784468590592}
+@nix {"action":"msg","level":3,"msg":"this derivation will be built:"}
+@nix {"action":"msg","level":3,"msg":"  /nix/store/yc6wbnbfhbw98i57fvz8sf16vsnr9hq5-zelador-ok.drv"}
+@nix {"action":"start","id":2100784468590597,"level":0,"parent":0,"text":"","type":102}
+@nix {"action":"start","id":2100784468590598,"level":0,"parent":0,"text":"","type":104}
+@nix {"action":"start","id":2100784468590599,"level":0,"parent":0,"text":"","type":103}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590598,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590599,"type":105}
+@nix {"action":"result","fields":[101,0],"id":2100784468590597,"type":106}
+@nix {"action":"result","fields":[100,0],"id":2100784468590597,"type":106}
+@nix {"action":"start","id":2100784468590600,"level":6,"parent":0,"text":"querying info about missing paths","type":0}
+@nix {"action":"stop","id":2100784468590600}
+@nix {"action":"result","fields":[0,1,0,0],"id":2100784468590598,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590599,"type":105}
+@nix {"action":"result","fields":[101,0],"id":2100784468590597,"type":106}
+@nix {"action":"result","fields":[100,0],"id":2100784468590597,"type":106}
+@nix {"action":"start","fields":["/nix/store/yc6wbnbfhbw98i57fvz8sf16vsnr9hq5-zelador-ok.drv","",1,1],"id":2100784468590601,"level":3,"parent":0,"text":"building '/nix/store/yc6wbnbfhbw98i57fvz8sf16vsnr9hq5-zelador-ok.drv'","type":105}
+@nix {"action":"result","fields":[0,1,1,0],"id":2100784468590598,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590599,"type":105}
+@nix {"action":"result","fields":[101,0],"id":2100784468590597,"type":106}
+@nix {"action":"result","fields":[100,0],"id":2100784468590597,"type":106}
+@nix {"action":"result","fields":["construindo"],"id":2100784468590601,"type":101}
+@nix {"action":"result","fields":[1,2,0,0],"id":2100784468590598,"type":105}
+@nix {"action":"result","fields":[0,0,0,0],"id":2100784468590599,"type":105}
+@nix {"action":"result","fields":[101,0],"id":2100784468590597,"type":106}
+@nix {"action":"result","fields":[100,0],"id":2100784468590597,"type":106}
+@nix {"action":"stop","id":2100784468590601}
+@nix {"action":"stop","id":2100784468590599}
+@nix {"action":"stop","id":2100784468590598}
+@nix {"action":"stop","id":2100784468590597}

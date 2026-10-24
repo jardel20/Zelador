@@ -9,11 +9,12 @@ use crate::ctx::Ctx;
 use crate::i18n::tr;
 use crate::pages::Page;
 use crate::screens;
-use crate::widgets::{bottom_bar, column};
+use crate::widgets::column;
 
 pub fn build(page: Page, ctx: &Rc<Ctx>) -> adw::ToolbarView {
     let view = adw::ToolbarView::new();
-    view.add_top_bar(&top_bar(page));
+    let (header, step_label) = top_bar(page);
+    view.add_top_bar(&header);
 
     let title = gtk::Label::builder()
         .label(page.title())
@@ -36,7 +37,7 @@ pub fn build(page: Page, ctx: &Rc<Ctx>) -> adw::ToolbarView {
     texts.append(&title);
     texts.append(&intro);
 
-    let screen = screens::build(page, ctx, &intro, &view);
+    let screen = screens::build(page, ctx, &title, &intro, step_label.as_ref(), &view);
 
     // Título e parágrafo à esquerda; um controle opcional (ex.: alternador) à direita.
     let head = gtk::Box::builder()
@@ -82,13 +83,10 @@ pub fn build(page: Page, ctx: &Rc<Ctx>) -> adw::ToolbarView {
         });
     }
 
-    if let Some(bar) = bottom_bar::for_page(page) {
-        view.add_bottom_bar(&bar);
-    }
     view
 }
 
-fn top_bar(page: Page) -> adw::HeaderBar {
+fn top_bar(page: Page) -> (adw::HeaderBar, Option<gtk::Label>) {
     // Só botões de ícone à direita: o "fechar" é um botão comum (ícone Phosphor `x`) que
     // chama `window.close`, em vez dos controles de janela do libadwaita.
     let header = adw::HeaderBar::builder()
@@ -105,25 +103,26 @@ fn top_bar(page: Page) -> adw::HeaderBar {
             .css_classes(["flat"])
             .build(),
     );
+    let mut step_label = None;
     match page {
         Page::Atualizar | Page::Aplicando => {
             let label = if page == Page::Atualizar {
-                tr("Atualização · etapa 3 de 3")
+                tr("Atualização · etapa 1 de 3")
             } else {
                 tr("Atualização")
             };
-            header.pack_start(
-                &gtk::Label::builder()
-                    .label(label)
-                    .css_classes(["step-label"])
-                    .margin_start(22)
-                    .build(),
-            );
+            let label = gtk::Label::builder()
+                .label(label)
+                .css_classes(["step-label"])
+                .margin_start(22)
+                .build();
+            header.pack_start(&label);
+            step_label = Some(label);
         }
         Page::SeuSistema => header.pack_end(&main_menu()),
         Page::Geracoes | Page::LiberarEspaco | Page::EspacoEmDisco => {}
     }
-    header
+    (header, step_label)
 }
 
 fn main_menu() -> gtk::MenuButton {

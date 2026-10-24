@@ -4,7 +4,7 @@ use std::path::Path;
 use std::process::ExitCode;
 
 use zelador_helper::error::exit;
-use zelador_helper::exec::{Failure, ProcessExecutor, run_plan};
+use zelador_helper::exec::{AnnouncingExecutor, Failure, ProcessExecutor, run_plan};
 use zelador_helper::lock::{LOCK_PATH, Lock, LockError};
 use zelador_helper::plan::validate;
 use zelador_helper::request::parse_args;
@@ -43,7 +43,9 @@ fn main() -> ExitCode {
         Ok(plan) => plan,
         Err(rejection) => return reject(&rejection.to_string()),
     };
-    match run_plan(&plan, &mut ProcessExecutor) {
+    let mut executor =
+        AnnouncingExecutor::new(ProcessExecutor, std::io::stderr(), plan.steps.len());
+    match run_plan(&plan, &mut executor) {
         Ok(()) => ExitCode::SUCCESS,
         Err(Failure::Exit { step, code }) => {
             eprintln!(

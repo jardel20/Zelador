@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 
 use tempfile::TempDir;
 use zelador_helper::Rejection;
-use zelador_helper::exec::{Executor, Failure, run_plan};
+use zelador_helper::exec::{AnnouncingExecutor, Executor, Failure, run_plan};
 use zelador_helper::lock::{Lock, LockError};
 use zelador_helper::plan::{Plan, SWITCH_UNIT, Step, validate};
 use zelador_helper::request::{CleanRequest, Mode, Request};
@@ -578,4 +578,45 @@ fn clean_herda_todas_as_recusas_dos_subcomandos() {
         .unwrap_err(),
         Rejection::NoSystemFlatpak
     );
+}
+
+#[test]
+fn o_executor_anuncia_cada_passo_antes_de_rodar_sem_mudar_o_que_roda() {
+    let sb = Sandbox::new();
+    let system = sb.system("abc-nixos-system");
+    let plan = sb.activate(&system, Mode::Switch).unwrap();
+
+    let mut written = Vec::new();
+    let recorder = Recorder {
+        codes: vec![Ok(0), Ok(0)],
+        ..Recorder::default()
+    };
+    let mut exec = AnnouncingExecutor::new(recorder, &mut written, plan.steps.len());
+    assert_eq!(run_plan(&plan, &mut exec), Ok(()));
+    drop(exec);
+    let text = String::from_utf8(written).unwrap();
+    assert_eq!(
+        text,
+        "@zelador {\"step\":1,\"of\":2,\"program\":\"nix-env\"}\n@zelador {\"step\":2,\"of\":2,\"program\":\"systemd-run\"}\n"
+    );
+}
+
+#[test]
+fn passo_que_falha_e_anunciado_e_os_seguintes_nao() {
+    let sb = Sandbox::new();
+    let system = sb.system("abc-nixos-system");
+    let plan = sb.activate(&system, Mode::Boot).unwrap();
+    let mut written = Vec::new();
+    let recorder = Recorder {
+        codes: vec![Ok(5), Ok(0)],
+        ..Recorder::default()
+    };
+    let mut exec = AnnouncingExecutor::new(recorder, &mut written, plan.steps.len());
+    assert_eq!(
+        run_plan(&plan, &mut exec),
+        Err(Failure::Exit { step: 0, code: 5 })
+    );
+    drop(exec);
+    let text = String::from_utf8(written).unwrap();
+    assert_eq!(text.lines().count(), 1);
 }
