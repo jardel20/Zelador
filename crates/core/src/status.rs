@@ -122,6 +122,8 @@ pub struct StoreStatus {
 
 #[derive(Debug, Default, Clone)]
 pub struct SystemStatus {
+    /// Cópia do flake no store, para mapear erros de avaliação aos arquivos do usuário.
+    pub flake_source_path: Option<String>,
     pub nixos_version: Option<String>,
     pub generations: Vec<Generation>,
     pub home_manager_generations: Vec<Generation>,
@@ -188,6 +190,7 @@ pub fn collect_overview(
         .unwrap_or_default();
 
     if let Some(metadata) = warnings.keep("inputs do flake", nix.flake_metadata(&env.flake)) {
+        status.flake_source_path = metadata.path.clone();
         status.inputs = metadata
             .inputs
             .into_iter()

@@ -5,11 +5,15 @@ use std::process::ExitCode;
 
 use anyhow::{Context, bail};
 use zelador_core::backends::{CliFlatpak, CliGit, CliNix};
+use zelador_core::check::CheckConfig;
 use zelador_core::cleanup::Policy;
 use zelador_core::flake::DEFAULT_STALE_DAYS;
+use zelador_core::history::{self, NewOperation, OperationKind, Outcome};
 use zelador_core::runner::SystemRunner;
 use zelador_core::status::{self, PendingChanges, StatusEnv, SystemStatus};
 use zelador_core::units::format_bytes;
+
+const GIB: u64 = 1024 * 1024 * 1024;
 
 const USAGE: &str = "uso: zelador-core <status|space> [--flake <pasta>] [--host <nome>]";
 
@@ -31,7 +35,7 @@ fn run() -> anyhow::Result<()> {
     let mut args = std::env::args().skip(1);
     let command = args.next();
     match command.as_deref() {
-        Some("status" | "space" | "clean" | "update" | "activate") => {}
+        Some("status" | "space" | "clean" | "update" | "activate" | "check" | "history") => {}
         Some("-h" | "--help") | None => {
             println!("{USAGE}");
             return Ok(());
@@ -42,6 +46,7 @@ fn run() -> anyhow::Result<()> {
     let mut host = None;
     let mut clean = CleanArgs::default();
     let mut update = UpdateArgs::default();
+    let mut check = CheckArgs::default();
     let mut positional: Vec<String> = Vec::new();
     while let Some(arg) = args.next() {
         let number =
@@ -80,6 +85,23 @@ fn run() -> anyhow::Result<()> {
                     .pins
                     .push(args.next().context("--pin pede NOME=REV")?);
             }
+            "--notify" if command.as_deref() == Some("check") => check.notify = true,
+            "--notify-send" if command.as_deref() == Some("check") => {
+                check.notify_send = args.next().context("--notify-send pede um programa")?;
+            }
+            "--open" if command.as_deref() == Some("check") => {
+                check.open = Some(args.next().context("--open pede um programa")?);
+            }
+            "--stale-days" if command.as_deref() == Some("check") => {
+                check.config.stale_days = i64::try_from(number(&mut args, "--stale-days")?)?;
+            }
+            "--min-free-gib" if command.as_deref() == Some("check") => {
+                check.config.min_free_bytes = number(&mut args, "--min-free-gib")? as u64 * GIB;
+            }
+            "--reclaimable-gib" if command.as_deref() == Some("check") => {
+                check.config.reclaimable_bytes =
+                    number(&mut args, "--reclaimable-gib")? as u64 * GIB;
+            }
             "--build" if command.as_deref() == Some("update") => update.build = true,
             "--state-dir" if command.as_deref() == Some("update") => {
                 update.state_dir = Some(args.next().context("--state-dir pede uma pasta")?.into());
@@ -104,8 +126,14 @@ fn run() -> anyhow::Result<()> {
     if command.as_deref() == Some("update") {
         return run_update(&env, &nix, &update);
     }
+    if command.as_deref() == Some("check") {
+        return run_check(&env, &nix, &check);
+    }
+    if command.as_deref() == Some("history") {
+        return run_history(&env);
+    }
     if command.as_deref() == Some("activate") {
-        return run_activate(&positional);
+        return run_activate(&env, &positional);
     }
     let result = status::collect(&env, &nix, &git, &flatpak);
     print_status(&env, &result);
@@ -410,25 +438,69 @@ fn run_clean(
         home_manager_profile: &env.home_manager_profiles_dir.join("home-manager"),
     };
     let before = free_bytes(std::path::Path::new("/nix")).unwrap_or(0);
-    for step in plan.steps() {
-        let name = match step.kind {
-            StepKind::RemoveLinks => "removendo links esquecidos",
-            StepKind::HomeManagerGenerations => "excluindo gerações do Home Manager",
-            StepKind::FlatpakUser => "removendo runtimes Flatpak sem uso (usuário)",
-            StepKind::Privileged => {
-                "etapa privilegiada: excluindo gerações do sistema, coletando lixo do store e deduplicando"
-            }
-        };
-        println!("→ {name}…");
-        cleaner.run(step, &plan).with_context(|| name.to_owned())?;
-    }
+    let started = std::time::Instant::now();
+    let result: anyhow::Result<()> = (|| {
+        for step in plan.steps() {
+            let name = match step.kind {
+                StepKind::RemoveLinks => "removendo links esquecidos",
+                StepKind::HomeManagerGenerations => "excluindo gerações do Home Manager",
+                StepKind::FlatpakUser => "removendo runtimes Flatpak sem uso (usuário)",
+                StepKind::Privileged => {
+                    "etapa privilegiada: excluindo gerações do sistema, coletando lixo do store e deduplicando"
+                }
+            };
+            println!("→ {name}…");
+            cleaner.run(step, &plan).with_context(|| name.to_owned())?;
+        }
+        Ok(())
+    })();
     let after = free_bytes(std::path::Path::new("/nix")).unwrap_or(0);
+    record_history(
+        env,
+        OperationKind::Clean,
+        started,
+        &result,
+        None,
+        result.is_ok().then(|| after.saturating_sub(before)),
+    );
+    result?;
     println!(
         "Concluído. Espaço livre: {} → {}",
         format_bytes(before),
         format_bytes(after)
     );
     Ok(())
+}
+
+/// Grava a operação no histórico, sem nunca atrapalhar o resultado.
+fn record_history(
+    env: &StatusEnv,
+    kind: OperationKind,
+    started: std::time::Instant,
+    result: &anyhow::Result<()>,
+    generation: Option<u64>,
+    bytes_freed: Option<u64>,
+) {
+    let detail = result.as_ref().err().map(|e| {
+        let text = format!("{e:#}");
+        text.chars().take(200).collect::<String>()
+    });
+    history::record_best_effort(
+        env,
+        &NewOperation {
+            kind,
+            started_at: env.now,
+            duration_ms: u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX),
+            outcome: if result.is_ok() {
+                Outcome::Success
+            } else {
+                Outcome::Failure
+            },
+            generation,
+            bytes_freed,
+            detail,
+        },
+    );
 }
 
 #[derive(Default)]
@@ -552,7 +624,7 @@ fn run_update(
     }
 }
 
-fn run_activate(positional: &[String]) -> anyhow::Result<()> {
+fn run_activate(env: &StatusEnv, positional: &[String]) -> anyhow::Result<()> {
     use zelador_core::apply::{ActivationEvent, ApplyMode};
     use zelador_core::cleanup::HelperClient;
 
@@ -569,7 +641,8 @@ fn run_activate(positional: &[String]) -> anyhow::Result<()> {
     if let Err(issue) = helper.check() {
         bail!("o helper privilegiado não está disponível: {issue:?}");
     }
-    helper
+    let started = std::time::Instant::now();
+    let result = helper
         .activate(std::path::Path::new(path), mode, &mut |event| match event {
             ActivationEvent::Step(marker) => {
                 println!("etapa {} de {}: {}", marker.step, marker.of, marker.program)
@@ -577,7 +650,125 @@ fn run_activate(positional: &[String]) -> anyhow::Result<()> {
             ActivationEvent::Stage(stage) => println!("fase: {stage:?}"),
             ActivationEvent::Log(line) => println!("  {line}"),
         })
-        .context("ativação")?;
+        .context("ativação");
+    let generation = history::current_system_generation(&env.system_profiles_dir);
+    record_history(
+        env,
+        OperationKind::Update,
+        started,
+        &result,
+        generation,
+        None,
+    );
+    result?;
     println!("Concluído.");
+    Ok(())
+}
+
+struct CheckArgs {
+    config: CheckConfig,
+    notify: bool,
+    notify_send: String,
+    open: Option<String>,
+}
+
+impl Default for CheckArgs {
+    fn default() -> Self {
+        Self {
+            config: CheckConfig::default(),
+            notify: false,
+            notify_send: "notify-send".to_owned(),
+            open: None,
+        }
+    }
+}
+
+/// Mede, decide e (com `--notify`) avisa. Só lê o sistema: nada é alterado.
+fn run_check(env: &StatusEnv, nix: &CliNix<SystemRunner>, args: &CheckArgs) -> anyhow::Result<()> {
+    use zelador_core::check::{Notifier, NotifySend, Observations, evaluate, is_due};
+    use zelador_core::disk::free_bytes;
+    use zelador_core::flake::parse_flake_lock;
+    use zelador_core::history::{History, default_path};
+
+    let inputs = std::fs::read_to_string(env.flake.join("flake.lock"))
+        .map_err(anyhow::Error::from)
+        .and_then(|text| Ok(parse_flake_lock(&text)?))
+        .unwrap_or_else(|error| {
+            eprintln!("aviso: não foi possível ler os inputs do flake: {error}");
+            Vec::new()
+        });
+    let free = free_bytes(std::path::Path::new("/nix")).ok();
+    // `--print-dead` leva alguns segundos: só roda se o limiar estiver ligado.
+    let reclaimable = if args.config.reclaimable_bytes > 0 {
+        status::gc_estimate(nix).ok().map(|estimate| estimate.bytes)
+    } else {
+        None
+    };
+    let findings = evaluate(
+        &Observations {
+            inputs: &inputs,
+            now: env.now,
+            free_bytes: free,
+            reclaimable_bytes: reclaimable,
+        },
+        &args.config,
+    );
+    if findings.is_empty() {
+        println!("Tudo certo: nada a avisar.");
+        return Ok(());
+    }
+    let history = if args.notify {
+        Some(History::open(&default_path(env)).context("histórico")?)
+    } else {
+        None
+    };
+    let notifier = NotifySend::new(SystemRunner, args.notify_send.clone());
+    for finding in &findings {
+        println!("{}: {}", finding.title, finding.body);
+        let Some(history) = &history else { continue };
+        if !is_due(history, finding.condition, env.now, &args.config)? {
+            println!(
+                "  (já avisado há menos de {} dias)",
+                args.config.notice_interval_days
+            );
+            continue;
+        }
+        match notifier.notify(finding) {
+            Ok(outcome) => {
+                history.set_notice(finding.condition.id(), env.now)?;
+                if outcome.clicked
+                    && let Some(open) = &args.open
+                {
+                    // Abre o app sem esperar por ele.
+                    if let Err(error) = std::process::Command::new(open).spawn() {
+                        eprintln!("aviso: não foi possível abrir {open}: {error}");
+                    }
+                }
+            }
+            Err(error) => eprintln!("aviso: não foi possível notificar: {error}"),
+        }
+    }
+    Ok(())
+}
+
+/// As últimas operações registradas, da mais nova para a mais antiga.
+fn run_history(env: &StatusEnv) -> anyhow::Result<()> {
+    let history = history::History::open(&history::default_path(env)).context("histórico")?;
+    let operations = history.recent(20)?;
+    if operations.is_empty() {
+        println!("Nenhuma operação registrada.");
+    }
+    for op in operations {
+        println!(
+            "{} {} {} {}ms geração={} liberou={} {}",
+            op.started_at,
+            op.kind.as_str(),
+            op.outcome.as_str(),
+            op.duration_ms,
+            op.generation.map_or("-".to_owned(), |n| n.to_string()),
+            op.bytes_freed.map_or("-".to_owned(), |n| n.to_string()),
+            op.detail.unwrap_or_default()
+        );
+    }
     Ok(())
 }

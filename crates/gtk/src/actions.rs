@@ -24,14 +24,32 @@ pub fn install(app: &adw::Application, style: &Rc<Style>, settings: Settings) {
                 return;
             };
             action.set_state(&enabled.to_variant());
+            // Relê do disco para não apagar as outras preferências.
             let settings = Settings {
                 use_system_theme: enabled,
+                ..Settings::load()
             };
             settings.save();
             style.set_settings(settings);
         })
         .build();
-    app.add_action_entries([about, quit, system_theme]);
+    // Compara sistemas com o `nvd` quando ele existe (senão, `nix store diff-closures`).
+    let prefer_nvd = gtk::gio::ActionEntry::builder("prefer-nvd")
+        .state(settings.prefer_nvd.to_variant())
+        .change_state(|_, action, value| {
+            let Some(enabled) = value.and_then(|v| v.get::<bool>()) else {
+                return;
+            };
+            action.set_state(&enabled.to_variant());
+            let settings = Settings {
+                prefer_nvd: enabled,
+                ..Settings::load()
+            };
+            settings.save();
+            crate::ctx::set_prefer_nvd(enabled);
+        })
+        .build();
+    app.add_action_entries([about, quit, system_theme, prefer_nvd]);
     app.set_accels_for_action("app.quit", &["<Control>q"]);
 }
 

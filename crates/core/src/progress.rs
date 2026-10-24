@@ -240,7 +240,7 @@ pub fn extract_build_failure(events: &[NixEvent], log_tail: &[String]) -> Option
 /// Um erro de avaliação do Nix traz um traço longo e, no fim, a causa depois de uma linha
 /// `error:` própria. Devolve `(título, detalhes)` da causa; sem esse formato, o texto inteiro e
 /// a primeira linha.
-fn focus_on_cause(text: &str) -> (String, String) {
+pub(crate) fn focus_on_cause(text: &str) -> (String, String) {
     let lines: Vec<&str> = text.lines().collect();
     let first = |lines: &[&str]| {
         lines

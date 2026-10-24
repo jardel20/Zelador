@@ -6,8 +6,12 @@
   pkg-config,
   wrapGAppsHook4,
   glib,
+  gettext,
   gtk4,
   libadwaita,
+  git,
+  nix,
+  flatpak,
   zelador-helper,
 }:
 rustPlatform.buildRustPackage {
@@ -21,6 +25,7 @@ rustPlatform.buildRustPackage {
       ../Cargo.lock
       ../clippy.toml
       ../crates
+      ../po
     ];
   };
   cargoLock.lockFile = ../Cargo.lock;
@@ -34,13 +39,25 @@ rustPlatform.buildRustPackage {
     pkg-config
     wrapGAppsHook4
     glib # glib-compile-resources, usado pelo build.rs
+    gettext # msgfmt, para compilar os catálogos de tradução
   ];
   buildInputs = [
     gtk4
     libadwaita
   ];
 
+  # `nix`, `git` e `flatpak` no fim do PATH: o do sistema vence; isto só garante que existam.
+  preFixup = ''
+    gappsWrapperArgs+=(--set-default ZELADOR_LOCALEDIR $out/share/locale)
+    gappsWrapperArgs+=(--suffix PATH : ${lib.makeBinPath [ nix git flatpak ]})
+  '';
+
   postInstall = ''
+    for po in po/*.po; do
+      lang=$(basename "$po" .po)
+      install -d "$out/share/locale/$lang/LC_MESSAGES"
+      msgfmt -o "$out/share/locale/$lang/LC_MESSAGES/zelador.mo" "$po"
+    done
     mkdir -p $out/share/icons
     cp -r --no-preserve=mode ${../crates/gtk/data/icons/hicolor} $out/share/icons/hicolor
     install -Dm644 ${../crates/gtk/data/br.dev.zelador.desktop} \

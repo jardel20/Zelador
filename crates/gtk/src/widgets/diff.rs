@@ -6,7 +6,8 @@ use zelador_core::diff::{DiffEntry, summarize};
 use zelador_core::units::format_bytes;
 
 use crate::ctx::nix;
-use crate::i18n::tr;
+use crate::format::package_changes;
+use crate::i18n::{tr, trf};
 use crate::loader::run_in_background;
 use crate::widgets::rows;
 
@@ -65,21 +66,20 @@ pub fn present(parent: Option<&gtk::Window>, title: String, old_path: String, ne
 
 pub fn fill(summary: &gtk::Label, list: &gtk::ListBox, entries: &[DiffEntry]) {
     let totals = summarize(entries);
-    let delta = if totals.size_delta >= 0 {
-        format!(
-            "o sistema vai ocupar {} a mais",
-            format_bytes(totals.size_delta.unsigned_abs())
-        )
+    let counts = package_changes(totals.updated, totals.added, totals.removed);
+    // O `nvd` não informa tamanho por pacote: sem nenhum, não afirma nada sobre espaço.
+    let has_sizes = entries.iter().any(|e| e.size_delta.is_some());
+    summary.set_label(&if has_sizes {
+        let amount = format_bytes(totals.size_delta.unsigned_abs());
+        let delta = if totals.size_delta >= 0 {
+            trf("o sistema vai ocupar {0} a mais", &[amount])
+        } else {
+            trf("o sistema vai ocupar {0} a menos", &[amount])
+        };
+        trf("{0} · {1}", &[counts, delta])
     } else {
-        format!(
-            "o sistema vai ocupar {} a menos",
-            format_bytes(totals.size_delta.unsigned_abs())
-        )
-    };
-    summary.set_label(&format!(
-        "{} atualizados, {} novos e {} removidos · {delta}",
-        totals.updated, totals.added, totals.removed
-    ));
+        counts
+    });
     let mut changed: Vec<&DiffEntry> = entries
         .iter()
         .filter(|e| e.is_updated() || e.is_added() || e.is_removed())

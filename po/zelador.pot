@@ -1,0 +1,1353 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the zelador package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: zelador 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-24 18:50-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: crates/gtk/src/actions.rs
+msgid "Painel operacional do NixOS: atualizar, voltar e liberar espaço."
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "jan."
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "fev."
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "mar."
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "abr."
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "mai."
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "jun."
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "jul."
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "ago."
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "set."
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "out."
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "nov."
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "dez."
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "{0} de {1}"
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "{0} de {1} de {2}"
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "hoje"
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "há {0} dia"
+msgid_plural "há {0} dias"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/gtk/src/format.rs
+msgid "há {0} mês"
+msgid_plural "há {0} meses"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/gtk/src/format.rs
+msgid "há {0} ano"
+msgid_plural "há {0} anos"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/gtk/src/format.rs
+msgid "{0}, {1} e {2}"
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "{0} pacote atualizado"
+msgid_plural "{0} pacotes atualizados"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/gtk/src/format.rs
+msgid "{0} novo"
+msgid_plural "{0} novos"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/gtk/src/format.rs
+msgid "{0} removido"
+msgid_plural "{0} removidos"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/gtk/src/format.rs
+msgid "A atualização falhou"
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "Atualização cancelada"
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "Limpeza liberou {0}"
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "Limpeza concluída"
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "A limpeza falhou"
+msgstr ""
+
+#: crates/gtk/src/format.rs crates/gtk/src/screens/geracoes.rs
+msgid "Gerações excluídas"
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "A exclusão de gerações falhou"
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "Não foi possível voltar de geração"
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "Não foi possível mudar o padrão no boot"
+msgstr ""
+
+#: crates/gtk/src/format.rs
+msgid "{0}, {1}"
+msgstr ""
+
+#: crates/gtk/src/i18n.rs crates/gtk/src/screens/seu_sistema.rs
+msgid "{0} commit"
+msgid_plural "{0} commits"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/gtk/src/pages.rs
+msgid "Seu sistema"
+msgstr ""
+
+#: crates/gtk/src/pages.rs
+msgid "Atualizar"
+msgstr ""
+
+#: crates/gtk/src/pages.rs
+msgid "Gerações"
+msgstr ""
+
+#: crates/gtk/src/pages.rs crates/gtk/src/screens/atualizar.rs
+#: crates/gtk/src/screens/espaco.rs crates/gtk/src/screens/seu_sistema.rs
+msgid "Liberar espaço"
+msgstr ""
+
+#: crates/gtk/src/pages.rs
+msgid "Espaço em disco"
+msgstr ""
+
+#: crates/gtk/src/pages.rs
+msgid "Aplicando"
+msgstr ""
+
+#: crates/gtk/src/pages.rs crates/gtk/src/screens/atualizar.rs
+msgid "Aplicar atualizações?"
+msgstr ""
+
+#: crates/gtk/src/pages.rs
+msgid "Aplicando a atualização"
+msgstr ""
+
+#: crates/gtk/src/pages.rs
+msgid "Reunindo as informações da sua configuração."
+msgstr ""
+
+#: crates/gtk/src/pages.rs crates/gtk/src/screens/atualizar.rs
+msgid "O build terminou sem erros. Nada mudou no sistema ainda."
+msgstr ""
+
+#: crates/gtk/src/pages.rs crates/gtk/src/screens/aplicando.rs
+msgid "Você pode continuar usando o computador. Não desligue até terminar."
+msgstr ""
+
+#: crates/gtk/src/pages.rs
+msgid ""
+"Cada configuração aplicada se torna uma geração. É possível voltar a "
+"qualquer uma delas."
+msgstr ""
+
+#: crates/gtk/src/pages.rs
+msgid ""
+"Escolha o que remover. Use Simular para ver o resultado antes de apagar."
+msgstr ""
+
+#: crates/gtk/src/pages.rs
+msgid "Veja o que ocupa espaço no Nix store e fora dele."
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Nenhuma atualização em andamento."
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Build concluído"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Registrar a geração"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Ativar a configuração"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Gravar o novo flake.lock"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs crates/gtk/src/screens/atualizar.rs
+msgid "Detalhes"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Iniciado às --:--"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs crates/gtk/src/screens/liberar.rs
+msgid "Concluir"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Ativando a configuração"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Parando serviços"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Iniciando serviços"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Reiniciando serviços"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Atualizando o menu de boot"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Instalando o carregador de boot"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Iniciado às"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Preparando a ativação"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Preparar o próximo boot"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Registrar a geração (a atual é a {0})"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Preparando o próximo boot"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Registrando a geração"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs crates/gtk/src/screens/atualizar.rs
+msgid "de"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "etapa"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Concluído"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Pronto. O sistema inicia na nova geração no próximo reinício."
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Pronto. A atualização está em uso."
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Pronto. A atualização está em uso até você reiniciar."
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "A ativação falhou"
+msgstr ""
+
+#: crates/gtk/src/screens/aplicando.rs
+msgid "Nada foi concluído:"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs crates/gtk/src/screens/seu_sistema.rs
+msgid "Inputs do flake"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs crates/gtk/src/screens/seu_sistema.rs
+msgid "Lendo os inputs do flake…"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid ""
+"O seu flake.lock só muda se você aplicar a atualização. Inputs fixados numa "
+"revisão não são atualizados."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Atualizar o lock dos inputs"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Avaliar a configuração"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Construir e baixar"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Calculando as mudanças…"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Ver mudanças"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Efetivar mudanças"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "No próximo reinício"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Agora"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid ""
+"Troca os serviços em execução. Alguns programas abertos podem precisar ser "
+"reiniciados."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Só até reiniciar"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Descartar esta atualização"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs crates/gtk/src/screens/geracoes.rs
+msgid "Voltar"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Continuar"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs crates/gtk/src/screens/liberar.rs
+msgid "O helper privilegiado não está instalado neste sistema."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid ""
+"Você pode construir e revisar a atualização, mas só consegue aplicá-la "
+"depois de ativar programs.zelador.enable."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs crates/gtk/src/screens/liberar.rs
+msgid "O pkexec com setuid não está habilitado neste sistema."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid ""
+"Você pode construir e revisar a atualização, mas só consegue aplicá-la com "
+"security.polkit.enablePkexecWrapper ativo."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Atualização · etapa"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "O que atualizar?"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Escolha os inputs do flake. Nada muda no sistema até você aplicar."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Construindo a atualização"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid ""
+"Você pode continuar usando o computador. Nada muda no sistema até você "
+"aplicar."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "A atualização não pôde ser construída"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Nada mudou no sistema. O seu flake.lock continua como estava."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs crates/gtk/src/screens/geracoes.rs
+#: crates/gtk/src/screens/liberar.rs crates/gtk/src/screens/seu_sistema.rs
+msgid "Cancelar"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Construindo…"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Aplicar"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs crates/gtk/src/screens/geracoes.rs
+msgid "O helper privilegiado não está instalado neste sistema"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs crates/gtk/src/screens/seu_sistema.rs
+msgid "Nenhum input encontrado no flake."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Atualizar só este"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Fixar numa revisão…"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Remover a fixação"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Opções do input"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Fixar numa revisão:"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid ""
+"Cole a revisão completa (40 caracteres). O input fica nela e não é "
+"atualizado."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Fixar"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Revisão inválida: use os 40 caracteres hexadecimais"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "fixado em"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Atualizando o lock dos inputs"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Avaliando a configuração"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Nada a baixar: tudo já está no store"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "A baixar:"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "a construir:"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "derivações"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Construindo e baixando:"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Não foi possível resumir as mudanças:"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "O build terminou, mas o resumo das mudanças não ficou pronto."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Atualização cancelada. Nada mudou."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Não foi possível preparar a atualização"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Espaço livre:"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "descompactado:"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Margem de segurança:"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Necessário:"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Faltam:"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Espaço insuficiente para esta atualização"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "O disco encheu durante o build. Libere espaço e tente de novo."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid ""
+"Não foi possível baixar de um cache. Verifique a conexão e tente de novo."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Abrir"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Ver o log completo"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Não foi possível ler o log:"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Log do build"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Copiar o erro"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Erro copiado"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Tentar de novo sem atualizar um destes:"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Tentar sem atualizar"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Não dá para fixar este input numa revisão"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Nenhuma mudança nos pacotes"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "o tamanho do sistema não muda"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs crates/gtk/src/widgets/diff.rs
+msgid "o sistema vai ocupar {0} a mais"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs crates/gtk/src/widgets/diff.rs
+msgid "o sistema vai ocupar {0} a menos"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid ""
+"Recomendado agora: o kernel mudou e só passa a valer depois de reiniciar."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "O sistema passa a usar a atualização ao reiniciar. Nada muda agora."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Para testar. Ao reiniciar, o sistema volta para a geração"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Para testar. Ao reiniciar, o sistema volta para a geração atual."
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "Mudanças da atualização"
+msgstr ""
+
+#: crates/gtk/src/screens/atualizar.rs
+msgid "aviso: não foi possível gravar o flake.lock: {0}"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Calculando o uso do /nix/store…"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Uso do /nix/store por categoria"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs crates/gtk/src/screens/liberar.rs
+msgid "Fora do Nix store"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs crates/gtk/src/screens/liberar.rs
+msgid "Lendo o Flatpak…"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Maiores pacotes do sistema"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Calculando os maiores pacotes…"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Nenhum runtime sem uso"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "{0}{1} em {2} runtimes que nenhum app usa"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Flatpak não encontrado"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Não foi possível calcular o uso do store:"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Em uso"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Sistema atual"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Home Manager atual"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Ambientes de desenvolvimento"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Pode sair"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs crates/gtk/src/screens/liberar.rs
+msgid "Gerações antigas"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Links esquecidos"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Sem referência"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Estimativa: o Nix não informa qual raiz mantém cada caminho vivo."
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "O /nix/store ocupa {0}, e cerca de {1} podem sair."
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Fora dele, o Flatpak ocupa mais {0}."
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Nenhum pacote encontrado."
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Não foi possível listar os pacotes:"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Por que está no sistema:"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Procurando a cadeia de dependência…"
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Nenhuma cadeia encontrada."
+msgstr ""
+
+#: crates/gtk/src/screens/espaco.rs
+msgid "Por quê?"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Excluir"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Comparar"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Sistema"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Home Manager"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Lendo as gerações…"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Nenhuma geração do sistema encontrada."
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Nenhuma geração do Home Manager encontrada."
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Geração"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "em uso"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "padrão no boot"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "{0} · kernel {1}"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Voltar para esta"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Tornar padrão no boot"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Para o Home Manager, use o próprio home-manager"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Opções da geração"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "O pkexec com setuid não está habilitado neste sistema"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Voltar para a geração"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid ""
+"O sistema passa a usar esta geração agora e ela vira o padrão no boot. "
+"Serviços podem reiniciar e programas abertos podem precisar ser reiniciados. "
+"Será pedida a senha de administrador."
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Voltou para a geração"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Tornar a geração"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "o padrão no boot?"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid ""
+"No próximo reinício o sistema inicia nesta geração. Nada muda agora. Será "
+"pedida a senha de administrador."
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Tornar padrão"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "é o novo padrão no boot"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid " Será pedida a senha de administrador."
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Excluir 1 geração?"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "gerações?"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Gerações:"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid ""
+"Os arquivos só saem do disco na próxima limpeza (coleta de lixo). Não dá "
+"para desfazer."
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Geração excluída"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "{0} gerações excluídas"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Não foi possível concluir:"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "1 selecionada"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "selecionadas"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "Selecione duas gerações para comparar"
+msgstr ""
+
+#: crates/gtk/src/screens/geracoes.rs
+msgid "A geração em uso e a padrão do boot não podem ser excluídas"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Manter as últimas"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "gerações do sistema"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "e todas as dos últimos"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "dias"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "do Home Manager"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Links de build esquecidos"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Cada um impede que o build correspondente seja apagado."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Deduplicar arquivos do store"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Troca arquivos idênticos por um só. Pode levar alguns minutos."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Não há como estimar a economia antes de rodar."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Runtimes Flatpak sem uso"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "serão liberados"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Simular"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Limpar"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid ""
+"Ative programs.zelador.enable no módulo NixOS para poder limpar. Simular "
+"continua disponível."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid ""
+"Ative security.polkit.enablePkexecWrapper (o módulo do Zelador faz isso). "
+"Simular continua disponível."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Calculando…"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Não foi possível calcular as estimativas"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Nenhum link esquecido foi encontrado."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Nenhum runtime sem uso."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Flatpak não encontrado."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Nenhuma geração sairia com essa política."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Saem {0} do sistema e {1} do Home Manager."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid ""
+"Também serão removidos {0} de caminhos sem referência, na coleta de lixo."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Cerca de"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Simulando…"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Não foi possível simular:"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Resultado da simulação"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs crates/gtk/src/widgets/page.rs
+msgid "Fechar"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Nada foi alterado. Isto é o que a limpeza faria:"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "• Gerações do sistema: {0}"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "• Gerações do Home Manager: {0}"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "• Link: {0}"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "• Runtimes Flatpak sem uso"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "• Deduplicar o store"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "• A coleta de lixo apagaria hoje {0} caminhos (simulação do Nix)."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Estimativa total: {0}."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid ""
+"Esta limpeza apaga gerações e arquivos do store e não pode ser desfeita."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Nenhuma senha de administrador será pedida."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid ""
+"Será pedida a senha de administrador uma vez, para a etapa privilegiada."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Limpar agora?"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Removendo links esquecidos"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Excluindo gerações do Home Manager"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Removendo runtimes Flatpak sem uso"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "exclui gerações do sistema"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "remove runtimes Flatpak do sistema"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "coleta o lixo do store"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "deduplica o store"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Limpando"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Cada etapa privilegiada pede a senha de administrador."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Parar depois desta etapa"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "pede senha"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Interrompida a seu pedido."
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Concluído. Espaço livre recuperado:"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "Limpeza concluída:"
+msgstr ""
+
+#: crates/gtk/src/screens/liberar.rs
+msgid "A limpeza parou:"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Revisar e aplicar"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Abrir pasta do flake"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Espaço"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Calculando o tamanho do /nix/store…"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Manutenção automática"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Histórico"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Nenhuma operação registrada ainda."
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Geração {0}, aplicada {1}."
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Não foi possível identificar a geração em uso."
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Todos os commits da configuração já foram aplicados."
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "A configuração tem 1 commit que ainda não foi aplicado."
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "A configuração tem {0} que ainda não foram aplicados."
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Nenhum commit novo desde que a geração foi aplicada."
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Cerca de {0} podem não ter sido aplicados."
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "{0} {1}"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "A geração em uso não registra a revisão do flake"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "A geração em uso foi construída com alterações não commitadas"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "A revisão da geração em uso não existe mais neste repositório"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid ""
+"{0}, então a contagem é aproximada (commits feitos depois da data da "
+"geração)."
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "ativa"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "inativa"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Limpeza do Nix:"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "otimização do store:"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "remoção de runtimes Flatpak:"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "nix-flatpak não configurado"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "{0} no /nix/store"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Cerca de {0} podem ser liberados"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Não foi possível calcular o tamanho do store"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Adicionar ao git"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid ""
+"1 arquivo novo está fora do git. O flake vai ignorá-lo no próximo build."
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid ""
+"{0} arquivos novos estão fora do git. O flake vai ignorá-los no próximo "
+"build."
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Adicionar ao git?"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid ""
+"Os arquivos abaixo passam a fazer parte do próximo build do flake. Nada é "
+"commitado."
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Adicionar"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Arquivos adicionados ao git"
+msgstr ""
+
+#: crates/gtk/src/screens/seu_sistema.rs
+msgid "Não foi possível adicionar:"
+msgstr ""
+
+#: crates/gtk/src/widgets/diff.rs
+msgid "Comparando…"
+msgstr ""
+
+#: crates/gtk/src/widgets/diff.rs
+msgid "Não foi possível comparar:"
+msgstr ""
+
+#: crates/gtk/src/widgets/diff.rs
+msgid "{0} · {1}"
+msgstr ""
+
+#: crates/gtk/src/widgets/diff.rs
+msgid "Nenhuma mudança de versão entre as duas gerações."
+msgstr ""
+
+#: crates/gtk/src/widgets/page.rs
+msgid "Atualização · etapa 1 de 3"
+msgstr ""
+
+#: crates/gtk/src/widgets/page.rs
+msgid "Atualização"
+msgstr ""
+
+#: crates/gtk/src/widgets/page.rs
+msgid "Usar o tema do sistema"
+msgstr ""
+
+#: crates/gtk/src/widgets/page.rs
+msgid "Sobre o Zelador"
+msgstr ""
+
+#: crates/gtk/src/widgets/page.rs
+msgid "Sair"
+msgstr ""
+
+#: crates/gtk/src/widgets/page.rs
+msgid "Menu principal"
+msgstr ""

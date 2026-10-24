@@ -1,19 +1,21 @@
 //! "Seu sistema": geração em uso, commits pendentes, arquivos fora do git, inputs do flake,
 //! espaço e histórico.
 
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use adw::prelude::*;
 use gtk::glib;
 use zelador_core::backends::GitBackend;
 use zelador_core::flake::SECONDS_PER_DAY;
+use zelador_core::history::{self, History};
 use zelador_core::status::{ApproximationReason, PendingChanges, SystemStatus};
 use zelador_core::units::format_bytes;
 
 use super::Screen;
 use crate::ctx::Ctx;
-use crate::format::{count, relative_age};
-use crate::i18n::tr;
+use crate::format::{describe_operation, relative_age};
+use crate::i18n::{tn, tr, trf};
 use crate::loader::run_in_background;
 use crate::pages::Page;
 use crate::widgets::rows;
@@ -83,8 +85,14 @@ pub fn build(ctx: &Rc<Ctx>, intro: &gtk::Label) -> Screen {
     root.append(&space);
 
     let history = rows::group(&tr("Histórico"));
-    history.add(&rows::muted_row(&tr("Nenhuma operação registrada ainda.")));
+    let history_rows: Rc<RefCell<Vec<gtk::Widget>>> = Rc::default();
     root.append(&history);
+    load_history(ctx, &history, &history_rows);
+    {
+        let (ctx2, group, held) = (Rc::clone(ctx), history.clone(), Rc::clone(&history_rows));
+        ctx.history_changed
+            .subscribe(move |()| load_history(&ctx2, &group, &held));
+    }
 
     // Parte rápida.
     ctx.overview.get(glib::clone!(
@@ -142,6 +150,42 @@ pub fn build(ctx: &Rc<Ctx>, intro: &gtk::Label) -> Screen {
     }
 }
 
+/// As últimas 3 operações do SQLite (ou o estado vazio).
+fn load_history(
+    ctx: &Rc<Ctx>,
+    group: &adw::PreferencesGroup,
+    held: &Rc<RefCell<Vec<gtk::Widget>>>,
+) {
+    let env = ctx.env.clone();
+    let (group, held) = (group.clone(), Rc::clone(held));
+    run_in_background(
+        move || {
+            History::open(&history::default_path(&env))
+                .and_then(|history| history.recent(3))
+                .map_err(|e| e.to_string())
+        },
+        move |result| {
+            let mut rows_held = held.borrow_mut();
+            rows::clear_group(&group, &mut rows_held);
+            let year = gtk::glib::DateTime::now_local().map_or(0, |now| now.year());
+            let operations = result.unwrap_or_default();
+            if operations.is_empty() {
+                let row = rows::muted_row(&tr("Nenhuma operação registrada ainda."));
+                group.add(&row);
+                rows_held.push(row.upcast());
+                return;
+            }
+            for operation in &operations {
+                let (title, when) = describe_operation(operation, year);
+                let row = rows::row(&title, None, false);
+                row.add_suffix(&rows::suffix_label(&when, &["caption-text"]));
+                group.add(&row);
+                rows_held.push(row.upcast());
+            }
+        },
+    );
+}
+
 fn intro_text(ctx: &Ctx, status: &SystemStatus) -> String {
     let generation = status
         .current_generation()
@@ -152,7 +196,10 @@ fn intro_text(ctx: &Ctx, status: &SystemStatus) -> String {
 /// `Geração 214, aplicada há 3 dias. A configuração tem 3 commits que ainda não foram aplicados.`
 fn compose_intro(generation: Option<(u64, i64)>, pending: Option<&PendingChanges>) -> String {
     let first = match generation {
-        Some((number, days)) => format!("Geração {number}, aplicada {}.", relative_age(days)),
+        Some((number, days)) => trf(
+            "Geração {0}, aplicada {1}.",
+            &[number.to_string(), relative_age(days)],
+        ),
         None => tr("Não foi possível identificar a geração em uso."),
     };
     let second = match pending {
@@ -162,21 +209,21 @@ fn compose_intro(generation: Option<(u64, i64)>, pending: Option<&PendingChanges
         Some(PendingChanges::Exact(1)) => Some(tr(
             "A configuração tem 1 commit que ainda não foi aplicado.",
         )),
-        Some(PendingChanges::Exact(n)) => Some(format!(
-            "A configuração tem {} que ainda não foram aplicados.",
-            count(*n, "commit", "commits")
+        Some(PendingChanges::Exact(n)) => Some(trf(
+            "A configuração tem {0} que ainda não foram aplicados.",
+            &[tn("{0} commit", "{0} commits", *n)],
         )),
         Some(PendingChanges::Approximate { commits: 0, .. }) => {
             Some(tr("Nenhum commit novo desde que a geração foi aplicada."))
         }
-        Some(PendingChanges::Approximate { commits, .. }) => Some(format!(
-            "Cerca de {} podem não ter sido aplicados.",
-            count(*commits, "commit", "commits")
+        Some(PendingChanges::Approximate { commits, .. }) => Some(trf(
+            "Cerca de {0} podem não ter sido aplicados.",
+            &[tn("{0} commit", "{0} commits", *commits)],
         )),
         None => None,
     };
     match second {
-        Some(second) => format!("{first} {second}"),
+        Some(second) => trf("{0} {1}", &[first, second]),
         None => first,
     }
 }
@@ -198,8 +245,9 @@ fn approximation_note(status: &SystemStatus) -> Option<String> {
             tr("A revisão da geração em uso não existe mais neste repositório")
         }
     };
-    Some(format!(
-        "{why}, então a contagem é aproximada (commits feitos depois da data da geração)."
+    Some(trf(
+        "{0}, então a contagem é aproximada (commits feitos depois da data da geração).",
+        &[why],
     ))
 }
 
@@ -265,10 +313,10 @@ fn show_space(
         (Ok(sizes), Ok(dead)) => {
             let total: u64 = sizes.values().sum();
             let reclaimable: u64 = dead.iter().filter_map(|path| sizes.get(path)).sum();
-            row.set_title(&format!("{} no /nix/store", format_bytes(total)));
-            row.set_subtitle(&format!(
-                "Cerca de {} podem ser liberados",
-                format_bytes(reclaimable)
+            row.set_title(&trf("{0} no /nix/store", &[format_bytes(total)]));
+            row.set_subtitle(&trf(
+                "Cerca de {0} podem ser liberados",
+                &[format_bytes(reclaimable)],
             ));
             let button = gtk::Button::builder()
                 .label(tr("Liberar espaço"))
@@ -374,9 +422,9 @@ impl Banner {
         let title = if untracked.len() == 1 {
             tr("1 arquivo novo está fora do git. O flake vai ignorá-lo no próximo build.")
         } else {
-            format!(
-                "{} arquivos novos estão fora do git. O flake vai ignorá-los no próximo build.",
-                untracked.len()
+            trf(
+                "{0} arquivos novos estão fora do git. O flake vai ignorá-los no próximo build.",
+                &[untracked.len().to_string()],
             )
         };
         self.title.set_label(&title);

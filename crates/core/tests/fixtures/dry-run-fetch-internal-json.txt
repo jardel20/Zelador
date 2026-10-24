@@ -1,0 +1,1 @@
+@nix {"action":"msg","level":0,"msg":"these 24 paths will be fetched (221.8 MiB download, 750.9 MiB unpacked):"}

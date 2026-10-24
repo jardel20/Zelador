@@ -24,6 +24,8 @@ pub enum Error {
         #[source]
         source: serde_json::Error,
     },
+    #[error("banco de dados do histórico: {0}")]
+    Db(#[from] rusqlite::Error),
     #[error("erro de E/S em {}: {source}", path.display())]
     Io {
         path: PathBuf,

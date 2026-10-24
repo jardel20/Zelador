@@ -1,0 +1,2 @@
+this derivation will be built:
+  /nix/store/s3xn632zkmyv1b1s1j2zacdyjxs980w7-zelador-construir.drv

@@ -1,0 +1,25 @@
+these 24 paths will be fetched (221.8 MiB download, 750.9 MiB unpacked):
+  /nix/store/wilbc0p2dqay7b39pm358yd7zwh1n1cj-aalib-1.4rc5
+  /nix/store/f9v34rm4x054mw97k8c6zgsnr4m6k1h4-babl-0.1.126
+  /nix/store/fia9j90905gizmpkfskicyds22nr4j9b-blas-3
+  /nix/store/vsll658wqf06awqybll9h1h5jgqk4qyd-cfitsio-4.7.0
+  /nix/store/m9v7ynyvz0lypync8shg50s3ybbzr47z-gegl-0.4.70
+  /nix/store/gg2mm0f02kzf1pkwqhbqk5j2b56j904r-gexiv2-0.14.6
+  /nix/store/88z8fzllkd830h41766dg8xvgk67790f-gfortran-16.2.0
+  /nix/store/l8bxxcl6q08mjqidgv9ddxi7dr3qjlwi-gfortran-16.2.0-lib
+  /nix/store/wvjmw9ivr8816jv3sp0rgdjwwa5lbv5c-gfortran-16.2.0-libgcc
+  /nix/store/8yxkzvl1ysmsy2qa3flsvcl0imqpk2hp-gfortran-wrapper-16.2.0
+  /nix/store/fxk2vljp8aamh4kmsjs08rjb96rn7l5g-gimp-3.2.6
+  /nix/store/231jbzyvbnv5wqsrhj9rc6gc26lrq1v3-gimp-3.2.6-man
+  /nix/store/7lyjk3g66k0pcg6dk2wq84v48asqvr11-graphviz-15.1.1
+  /nix/store/dh500xmhbqn4wv5lxskw873ydkqjv5xs-gts-0.7.6
+  /nix/store/8x6hx0i3jrzvbxzimkf7fa0lz7x013z5-lapack-3
+  /nix/store/9jaisqfpc3b2433m0aff260dhkb5878f-libiff-0-unstable-2024-03-02
+  /nix/store/c1pvk1cc316ppwpw88058i0815w2av9l-libilbm-0-unstable-2024-03-02
+  /nix/store/wzkcfaskpaacp716nm0hkrkmzk7dxhnf-libmng-2.0.3
+  /nix/store/2r7bmkk5qs8wgp8mi21gc9bri5wb6aqi-libmypaint-1.6.1
+  /nix/store/qr4f7jbdsrn68v5pb573ndmiig6g3fbk-libwmf-0.2.16
+  /nix/store/9amj0fbk0iq4sfhcazc7d7q9arl0vywq-mypaint-brushes-2.0.2
+  /nix/store/cl1zf7pwrf2wpyfi3k8jdh6ggia918ja-openblas-0.3.33
+  /nix/store/3ygpy3qh541a766p9npkqha3hw5xw0a8-poly2tri-c-0.1.0
+  /nix/store/paw448kjrzkra9yxr9sm6zzla2b95nyy-suitesparse-7.10.0

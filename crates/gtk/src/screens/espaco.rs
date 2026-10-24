@@ -18,7 +18,7 @@ use zelador_core::units::format_bytes;
 
 use super::Screen;
 use crate::ctx::{Ctx, nix};
-use crate::i18n::tr;
+use crate::i18n::{tr, trf};
 use crate::loader::run_in_background;
 use crate::pages::Page;
 use crate::widgets::rows;
@@ -195,10 +195,13 @@ impl View {
                     } else {
                         ""
                     };
-                    format!(
-                        "{}{plus} em {} runtimes que nenhum app usa",
-                        format_bytes(flatpak.unused_bytes),
-                        flatpak.unused.len()
+                    trf(
+                        "{0}{1} em {2} runtimes que nenhum app usa",
+                        &[
+                            format_bytes(flatpak.unused_bytes),
+                            plus.to_owned(),
+                            flatpak.unused.len().to_string(),
+                        ],
                     )
                 };
                 let row = rows::row("Flatpak", Some(&unused), false);
@@ -320,15 +323,15 @@ impl View {
     fn refresh_intro(&self) {
         let totals = self.totals.borrow();
         let Some(space) = totals.space else { return };
-        let mut text = format!(
-            "O /nix/store ocupa {}, e cerca de {} podem sair.",
-            format_bytes(space.total),
-            format_bytes(space.reclaimable())
+        let mut text = trf(
+            "O /nix/store ocupa {0}, e cerca de {1} podem sair.",
+            &[format_bytes(space.total), format_bytes(space.reclaimable())],
         );
         if let Some(flatpak) = totals.flatpak {
-            text.push_str(&format!(
-                " Fora dele, o Flatpak ocupa mais {}.",
-                format_bytes(flatpak)
+            text.push(' ');
+            text.push_str(&trf(
+                "Fora dele, o Flatpak ocupa mais {0}.",
+                &[format_bytes(flatpak)],
             ));
         }
         self.intro.set_label(&text);

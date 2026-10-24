@@ -10,13 +10,14 @@ use gtk::{gio, glib};
 use zelador_core::backends::NixBackend;
 use zelador_core::cleanup::{HelperClient, HelperIssue, PrivilegedHelper};
 use zelador_core::generations::{Generation, GenerationKind, generation_sizes};
+use zelador_core::history::{NewOperation, OperationKind, Outcome};
 use zelador_core::runner::SystemRunner;
 use zelador_core::units::format_bytes;
 
 use super::Screen;
-use crate::ctx::{Ctx, nix};
+use crate::ctx::{Ctx, elapsed_ms, epoch_now, nix};
 use crate::format::short_date_from_epoch;
-use crate::i18n::tr;
+use crate::i18n::{tr, trf};
 use crate::loader::run_in_background;
 use crate::widgets::rows;
 
@@ -358,7 +359,7 @@ fn generation_row(
     text.append(&title);
     let when = short_date_from_epoch(generation.created);
     let subtitle = match &generation.kernel {
-        Some(kernel) => format!("{when} · kernel {kernel}"),
+        Some(kernel) => trf("{0} · kernel {1}", &[when, kernel.clone()]),
         None => when,
     };
     text.append(
@@ -501,6 +502,7 @@ fn confirm_rollback(ui: &Rc<Ui>, number: u64) {
                 &ui2,
                 vec!["rollback".to_owned(), number.to_string()],
                 format!("{} {number}", tr("Voltou para a geração")),
+                Record::new(OperationKind::Rollback, Some(number), None),
             );
         },
     );
@@ -529,6 +531,7 @@ fn confirm_set_boot(ui: &Rc<Ui>, number: u64) {
                     tr("Geração"),
                     tr("é o novo padrão no boot")
                 ),
+                Record::new(OperationKind::SetBootDefault, Some(number), None),
             );
         },
     );
@@ -582,15 +585,24 @@ fn delete_generations(ui: &Rc<Ui>, kind: GenerationKind, numbers: Vec<u64>) {
     } else {
         tr("Gerações excluídas")
     };
+    let record = Record::new(
+        OperationKind::DeleteGenerations,
+        None,
+        Some(if numbers.len() == 1 {
+            "1 geração excluída".to_owned()
+        } else {
+            trf("{0} gerações excluídas", &[numbers.len().to_string()])
+        }),
+    );
     match kind {
         GenerationKind::System => {
             let mut args = vec!["delete-generations".to_owned()];
             args.extend(numbers.iter().map(u64::to_string));
-            run_helper(ui, args, message);
+            run_helper(ui, args, message, record);
         }
         GenerationKind::HomeManager => {
             let profile = ui.ctx.env.home_manager_profiles_dir.join("home-manager");
-            run_blocking(ui, message, move || {
+            run_blocking(ui, message, record, move || {
                 nix()
                     .delete_user_generations(&profile, &numbers)
                     .map_err(|e| e.to_string())
@@ -599,25 +611,62 @@ fn delete_generations(ui: &Rc<Ui>, kind: GenerationKind, numbers: Vec<u64>) {
     }
 }
 
-fn run_helper(ui: &Rc<Ui>, args: Vec<String>, success: String) {
-    run_blocking(ui, success, move || {
+/// O que gravar no histórico depois da ação.
+struct Record {
+    kind: OperationKind,
+    generation: Option<u64>,
+    detail: Option<String>,
+}
+
+impl Record {
+    fn new(kind: OperationKind, generation: Option<u64>, detail: Option<String>) -> Self {
+        Self {
+            kind,
+            generation,
+            detail,
+        }
+    }
+}
+
+fn run_helper(ui: &Rc<Ui>, args: Vec<String>, success: String, record: Record) {
+    run_blocking(ui, success, record, move || {
         HelperClient::production(SystemRunner)
             .run(&args)
             .map_err(|e| e.to_string())
     });
 }
 
-/// Roda a ação fora da thread principal, avisa o resultado e recarrega a lista.
+/// Roda a ação fora da thread principal, avisa o resultado, grava no histórico e recarrega a lista.
 fn run_blocking(
     ui: &Rc<Ui>,
     success: String,
+    record: Record,
     work: impl FnOnce() -> Result<(), String> + Send + 'static,
 ) {
     ui.busy.set(true);
     ui.delete.set_sensitive(false);
     let ui = Rc::clone(ui);
+    let (started, started_at) = (std::time::Instant::now(), epoch_now());
     run_in_background(work, move |result| {
         ui.busy.set(false);
+        let outcome = if result.is_ok() {
+            Outcome::Success
+        } else {
+            Outcome::Failure
+        };
+        let detail = match &result {
+            Ok(()) => record.detail.clone(),
+            Err(error) => Some(error.chars().take(200).collect()),
+        };
+        ui.ctx.record(NewOperation {
+            kind: record.kind,
+            started_at,
+            duration_ms: elapsed_ms(started),
+            outcome,
+            generation: record.generation,
+            bytes_freed: None,
+            detail,
+        });
         match result {
             Ok(()) => ui.ctx.toast(&success),
             Err(error) => ui

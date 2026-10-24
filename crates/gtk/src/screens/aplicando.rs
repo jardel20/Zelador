@@ -8,7 +8,7 @@ use zelador_core::apply::{ActivationStage, ApplyMode};
 
 use super::Screen;
 use crate::ctx::{ApplyEvent, Ctx};
-use crate::i18n::tr;
+use crate::i18n::{tr, trf};
 use crate::pages::Page;
 use crate::widgets::bottom_bar;
 
@@ -317,7 +317,7 @@ impl Ui {
             ApplyMode::Switch | ApplyMode::Test => tr("Ativar a configuração"),
         });
         let register_text = match previous_generation {
-            Some(n) => format!("{} (a atual é a {n})", tr("Registrar a geração")),
+            Some(n) => trf("Registrar a geração (a atual é a {0})", &[n.to_string()]),
             None => tr("Registrar a geração"),
         };
         self.rows.register.label.set_label(&register_text);

@@ -136,6 +136,37 @@ pkgs.testers.runNixOSTest {
         machine.succeed(f"test -L /nix/var/nix/profiles/system-{orig_gen}-link")
         assert machine.succeed("readlink -f /nix/var/nix/profiles/system").strip() == original
 
+    with subtest("zelador-core history: as operações anteriores foram registradas"):
+        out = machine.succeed(as_user("alice", "zelador-core history 2>&1"))
+        # A limpeza e as ativações feitas pela CLI entram no histórico, com resultado.
+        assert " clean success " in out, out
+        assert " update success " in out, out
+
+    with subtest("o timer de usuário é gerado pelo módulo e só avisa"):
+        timer = machine.succeed("cat /etc/systemd/user/zelador-check.timer")
+        assert "OnCalendar=daily" in timer and "Persistent=true" in timer, timer
+        service = machine.succeed("cat /etc/systemd/user/zelador-check.service")
+        assert "zelador-core check --notify" in service, service
+        assert "--stale-days 1" in service and "--flake /etc/zelador-check" in service, service
+        # Nada de ações: o serviço não chama activate, clean nem update.
+        assert "clean" not in service.replace("zelador-check", "") and "activate" not in service, service
+
+    with subtest("check --notify avisa uma vez e não repete antes do intervalo"):
+        fake = "/etc/zelador-fake-notify-send"
+        cmd = f"zelador-core check --notify --flake /etc/zelador-check --notify-send {fake} --open /run/current-system/sw/bin/true --stale-days 1 --min-free-gib 100000 --reclaimable-gib 0"
+        out = machine.succeed(as_user("alice", f"{cmd} 2>&1"))
+        assert "Inputs do flake desatualizados" in out and "Pouco espaço em disco" in out, out
+        # (`log` é uma global do driver de testes: não reaproveitar o nome.)
+        notified = machine.succeed("cat /tmp/zelador-notify.log")
+        assert notified.count("--app-name=Zelador") >= 2, notified
+        # Título e corpo vão depois do `--`, e a ação abre o app.
+        assert "--action=open=Abrir o Zelador" in notified, notified
+        assert "-- Inputs do flake desatualizados" in notified, notified
+        before = len(notified.splitlines())
+        out = machine.succeed(as_user("alice", f"{cmd} 2>&1"))
+        assert "já avisado" in out, out
+        assert len(machine.succeed("cat /tmp/zelador-notify.log").splitlines()) == before
+
     with subtest("sem instalação Flatpak de sistema, flatpak-remove-unused é recusado"):
         status, out = machine.execute(as_user("alice", f"{pkexec} {helper} flatpak-remove-unused 2>&1"))
         assert status == 65, (status, out)

@@ -3,6 +3,24 @@
 { lib, pkgs, ... }:
 {
   programs.zelador.enable = true;
+  programs.zelador.checkTimer = {
+    enable = true;
+    interval = "daily";
+    staleDays = 1;
+  };
+  programs.zelador.flakePath = "/etc/zelador-check";
+
+  # Um flake.lock real (com inputs velhos) para o `check`, e um notify-send falso que registra
+  # o que receberia e responde "open", como se o usuário tivesse clicado.
+  environment.etc."zelador-check/flake.lock".source = ../crates/core/tests/fixtures/lock-before.json;
+  environment.etc."zelador-fake-notify-send" = {
+    mode = "0755";
+    text = ''
+      #!/bin/sh
+      echo "$@" >> /tmp/zelador-notify.log
+      echo open
+    '';
+  };
 
   # O `zelador-core` usa `nix path-info`/`nix store`, que exigem a nova CLI. O sistema real do
   # usuário já a habilita.

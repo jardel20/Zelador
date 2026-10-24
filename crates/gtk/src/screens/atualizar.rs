@@ -13,8 +13,12 @@ use zelador_core::apply::{ActivationEvent, ApplyMode};
 use zelador_core::backends::{BuildRequest, NixBuild};
 use zelador_core::build::{BuildOutcome, BuildPhase, BuildProgress, run_build};
 use zelador_core::cleanup::{HelperClient, HelperIssue};
+use zelador_core::disk::free_bytes;
+use zelador_core::failure::{FailureHint, failed_derivation, hint_for, user_files};
 use zelador_core::flake::{FlakeInput, InputChange, pin_reference};
-use zelador_core::runner::{CancelToken, SystemRunner};
+use zelador_core::history::{self, NewOperation, OperationKind, Outcome};
+use zelador_core::precheck::{DiskCheck, DownloadEstimate, DryRun, check_disk, run_dry_run};
+use zelador_core::runner::{CancelToken, CommandRunner, CommandSpec, SystemRunner};
 use zelador_core::status::SystemStatus;
 use zelador_core::units::format_bytes;
 use zelador_core::update::{
@@ -23,12 +27,12 @@ use zelador_core::update::{
 };
 
 use super::Screen;
-use crate::ctx::{ApplyEvent, Ctx, nix};
-use crate::format::{count, relative_age};
-use crate::i18n::tr;
+use crate::ctx::{ApplyEvent, Ctx, elapsed_ms, epoch_now, nix};
+use crate::format::{package_changes, relative_age};
+use crate::i18n::{tr, trf};
 use crate::loader::stream_in_background;
 use crate::pages::Page;
-use crate::widgets::{bottom_bar, diff, rows};
+use crate::widgets::{bottom_bar, diff, rows, text_dialog};
 
 const MAX_LOG_LINES: usize = 200;
 
@@ -62,11 +66,23 @@ struct Built {
 
 enum Event {
     Evaluating,
+    /// O Nix já disse o que vai baixar e cabe no disco.
+    Downloading(DownloadEstimate),
+    /// Não cabe no disco: o build nem começa.
+    Blocked(DiskCheck),
     Locking,
     Locked(LockPreparation),
     Progress(BuildProgress),
     Summary(Box<Result<UpdateSummary, String>>),
     Done(Result<BuildOutcome, String>),
+}
+
+/// O que o botão principal faz na tela de falha.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum FailedAction {
+    None,
+    /// Leva à tela "Liberar espaço".
+    FreeSpace,
 }
 
 struct InputRow {
@@ -102,6 +118,9 @@ struct Wizard {
     log: gtk::Label,
     log_lines: RefCell<VecDeque<String>>,
     failure: gtk::Label,
+    /// Botões da falha: abrir arquivo, copiar, ver log, tentar sem um input.
+    failure_actions: gtk::Box,
+    failed_action: Cell<FailedAction>,
     cancel: RefCell<Option<Arc<CancelToken>>>,
 
     // 3. Revisar
@@ -198,6 +217,12 @@ pub fn build(
         .css_classes(["mono", "log-view"])
         .build();
     building.append(&failure);
+    let failure_actions = gtk::Box::builder()
+        .orientation(gtk::Orientation::Vertical)
+        .spacing(8)
+        .visible(false)
+        .build();
+    building.append(&failure_actions);
     let log = gtk::Label::builder()
         .xalign(0.0)
         .yalign(0.0)
@@ -318,6 +343,8 @@ pub fn build(
         log,
         log_lines: RefCell::new(VecDeque::new()),
         failure,
+        failure_actions,
+        failed_action: Cell::new(FailedAction::None),
         cancel: RefCell::new(None),
         summary_row,
         review_changes: review_changes.clone(),
@@ -567,7 +594,11 @@ impl Wizard {
             Step::Failed => {
                 self.back.set_visible(true);
                 self.back.set_label(&tr("Voltar"));
-                self.primary.set_visible(false);
+                let free_space = self.failed_action.get() == FailedAction::FreeSpace;
+                self.primary.set_visible(free_space);
+                self.primary.set_label(&tr("Liberar espaço"));
+                self.primary.set_sensitive(free_space);
+                self.primary.set_tooltip_text(None);
             }
             Step::Review => {
                 self.back.set_visible(true);
@@ -590,7 +621,13 @@ impl Wizard {
         match self.step.get() {
             Step::Choose => self.start_update(),
             Step::Review => self.apply(),
-            Step::Building | Step::Failed => {}
+            Step::Failed => {
+                if self.failed_action.get() == FailedAction::FreeSpace {
+                    self.discard_and_restart();
+                    self.ctx.go_to(Page::LiberarEspaco);
+                }
+            }
+            Step::Building => {}
         }
     }
 
@@ -640,7 +677,7 @@ impl Wizard {
             *w.inputs.borrow_mut() = status.inputs.iter().map(|i| i.input.clone()).collect();
             w.render_inputs(&status);
             match crate::dev_action().as_deref() {
-                Some("wizard-demo") => w.dev_demo(),
+                Some("wizard-demo" | "wizard-blocked") => w.dev_demo(),
                 // Atualiza tudo, como o botão "Continuar" com a seleção padrão.
                 Some("wizard-update") => w.start_update(),
                 _ => {}
@@ -863,6 +900,29 @@ impl Wizard {
                     out_link: workspace.out_link(),
                     reference_lock: Some(workspace.new_lock()),
                 };
+                // Avalia e descobre o que será baixado, antes de gastar disco ou tempo.
+                match run_dry_run(&SystemRunner, &NixBuild, &request) {
+                    Ok(DryRun::Failed(failure)) => {
+                        return send(Event::Done(Ok(BuildOutcome::Failed(failure))));
+                    }
+                    Ok(DryRun::Estimate(estimate)) => {
+                        // Se o espaço livre não puder ser lido, segue: o Nix avisa se faltar.
+                        let free = free_bytes(std::path::Path::new("/nix")).unwrap_or(u64::MAX);
+                        // Só para verificação visual (ver `crate::dev_action`): finge disco cheio.
+                        let free = if crate::dev_action().as_deref() == Some("wizard-blocked") {
+                            1024 * 1024 * 1024
+                        } else {
+                            free
+                        };
+                        match check_disk(estimate, free) {
+                            check @ DiskCheck::Insufficient { .. } => {
+                                return send(Event::Blocked(check));
+                            }
+                            DiskCheck::Enough { .. } => send(Event::Downloading(estimate)),
+                        }
+                    }
+                    Err(error) => return send(Event::Done(Err(error.to_string()))),
+                }
                 let outcome = run_build(
                     &SystemRunner,
                     &NixBuild,
@@ -908,6 +968,22 @@ impl Wizard {
                 set_state(&self.eval_row, "running");
                 self.activity.set_label(&tr("Avaliando a configuração"));
             }
+            Event::Downloading(estimate) => {
+                let text = if estimate.paths_to_fetch + estimate.derivations_to_build == 0 {
+                    tr("Nada a baixar: tudo já está no store")
+                } else {
+                    format!(
+                        "{} {}, {} {} {}",
+                        tr("A baixar:"),
+                        format_bytes(estimate.download_bytes),
+                        tr("a construir:"),
+                        estimate.derivations_to_build,
+                        tr("derivações")
+                    )
+                };
+                self.push_log(&text);
+            }
+            Event::Blocked(check) => self.show_blocked(&check),
             Event::Progress(progress) => {
                 if progress.phase == BuildPhase::Building {
                     set_state(&self.eval_row, "done");
@@ -973,18 +1049,36 @@ impl Wizard {
                 self.set_step(Step::Review);
             }
             Ok(BuildOutcome::Cancelled) => {
+                self.record_update(started, Outcome::Cancelled, None);
                 let _ = self.workspace.discard();
                 self.set_step(Step::Choose);
                 self.ctx.toast(&tr("Atualização cancelada. Nada mudou."));
             }
             Ok(BuildOutcome::Failed(failure)) => {
+                self.record_update(started, Outcome::Failure, Some(&failure.headline));
                 self.show_failure(&failure.headline, &failure.details)
             }
-            Err(error) => self.show_failure(&tr("Não foi possível preparar a atualização"), &error),
+            Err(error) => {
+                self.record_update(started, Outcome::Failure, Some(&error));
+                self.show_failure(&tr("Não foi possível preparar a atualização"), &error)
+            }
         }
     }
 
-    fn show_failure(&self, headline: &str, details: &str) {
+    /// Grava no histórico uma atualização que terminou sem ser aplicada.
+    fn record_update(&self, started: std::time::Instant, outcome: Outcome, detail: Option<&str>) {
+        self.ctx.record(NewOperation {
+            kind: OperationKind::Update,
+            started_at: epoch_now() - i64::try_from(started.elapsed().as_secs()).unwrap_or(0),
+            duration_ms: elapsed_ms(started),
+            outcome,
+            generation: None,
+            bytes_freed: None,
+            detail: detail.map(|d| d.chars().take(200).collect()),
+        });
+    }
+
+    fn show_failure(self: &Rc<Self>, headline: &str, details: &str) {
         for row in [&self.lock_row, &self.eval_row, &self.build_row] {
             if row.stack.visible_child_name().as_deref() == Some("running") {
                 set_state(row, "failed");
@@ -994,9 +1088,206 @@ impl Wizard {
         self.activity.set_label(headline);
         self.failure.set_label(details);
         self.failure.set_visible(!details.is_empty());
+        let hint = hint_for(details).or_else(|| hint_for(headline));
+        self.failed_action
+            .set(if hint == Some(FailureHint::DiskFull) {
+                FailedAction::FreeSpace
+            } else {
+                FailedAction::None
+            });
+        self.build_failure_actions(headline, details, hint);
         // O estado temporário já pode sair; o flake.lock nunca foi tocado.
         let _ = self.workspace.discard();
         self.set_step(Step::Failed);
+    }
+
+    /// O build nem começou porque o disco não comporta o download.
+    fn show_blocked(self: &Rc<Self>, check: &DiskCheck) {
+        let DiskCheck::Insufficient {
+            free,
+            needed,
+            margin,
+            estimate,
+        } = check
+        else {
+            return;
+        };
+        let details = format!(
+            "{} {}\n{} {} ({} {})\n{} {}\n{} {}\n{} {}",
+            tr("Espaço livre:"),
+            format_bytes(*free),
+            tr("A baixar:"),
+            format_bytes(estimate.download_bytes),
+            tr("descompactado:"),
+            format_bytes(estimate.unpacked_bytes),
+            tr("Margem de segurança:"),
+            format_bytes(*margin),
+            tr("Necessário:"),
+            format_bytes(*needed),
+            tr("Faltam:"),
+            format_bytes(needed.saturating_sub(*free)),
+        );
+        self.busy.set(false);
+        *self.cancel.borrow_mut() = None;
+        set_state(&self.eval_row, "failed");
+        self.progress.set_fraction(0.0);
+        self.activity
+            .set_label(&tr("Espaço insuficiente para esta atualização"));
+        self.failure.set_label(&details);
+        self.failure.set_visible(true);
+        self.failed_action.set(FailedAction::FreeSpace);
+        self.clear_failure_actions();
+        let _ = self.workspace.discard();
+        self.set_step(Step::Failed);
+    }
+
+    fn clear_failure_actions(&self) {
+        while let Some(child) = self.failure_actions.first_child() {
+            self.failure_actions.remove(&child);
+        }
+        self.failure_actions.set_visible(false);
+    }
+
+    /// Ações para entender e contornar a falha.
+    fn build_failure_actions(
+        self: &Rc<Self>,
+        headline: &str,
+        details: &str,
+        hint: Option<FailureHint>,
+    ) {
+        self.clear_failure_actions();
+        let add = |button: &gtk::Button| {
+            button.set_halign(gtk::Align::Start);
+            self.failure_actions.append(button);
+        };
+        let full = format!("{headline}\n\n{details}");
+
+        match hint {
+            Some(FailureHint::DiskFull) => self.failure_actions.append(&caption(&tr(
+                "O disco encheu durante o build. Libere espaço e tente de novo.",
+            ))),
+            Some(FailureHint::Network) => self.failure_actions.append(&caption(&tr(
+                "Não foi possível baixar de um cache. Verifique a conexão e tente de novo.",
+            ))),
+            None => {}
+        }
+
+        // Arquivos seus citados no erro (a cópia do flake no store vira a sua pasta).
+        let source = self
+            .status
+            .borrow()
+            .as_ref()
+            .and_then(|s| s.flake_source_path.clone());
+        if let Some(source) = source {
+            for file in user_files(&full, &source, &self.ctx.env.flake) {
+                let name = file
+                    .path
+                    .strip_prefix(&self.ctx.env.flake)
+                    .unwrap_or(&file.path)
+                    .display()
+                    .to_string();
+                let label = match file.line {
+                    Some(line) => format!("{} {name}:{line}", tr("Abrir")),
+                    None => format!("{} {name}", tr("Abrir")),
+                };
+                let button = gtk::Button::builder().label(label).build();
+                let (ctx, path) = (Rc::clone(&self.ctx), file.path.clone());
+                button.connect_clicked(move |_| {
+                    let launcher = gtk::FileLauncher::new(Some(&gio::File::for_path(&path)));
+                    launcher.launch(ctx.window().as_ref(), None::<&gio::Cancellable>, |result| {
+                        if let Err(error) = result {
+                            tracing::warn!(%error, "não foi possível abrir o arquivo");
+                        }
+                    });
+                });
+                add(&button);
+            }
+        }
+
+        // Falha de derivação: o log completo.
+        if let Some(drv) = failed_derivation(&full) {
+            let button = gtk::Button::builder()
+                .label(tr("Ver o log completo"))
+                .build();
+            let ctx = Rc::clone(&self.ctx);
+            button.connect_clicked(move |_| {
+                let (ctx2, drv2) = (Rc::clone(&ctx), drv.clone());
+                crate::loader::run_in_background(
+                    move || {
+                        let spec = CommandSpec::new("nix").args(["log", &drv2]);
+                        SystemRunner
+                            .run(&spec)
+                            .and_then(|out| out.into_stdout(&spec))
+                            .map_err(|e| e.to_string())
+                    },
+                    move |result| {
+                        let text = result.unwrap_or_else(|e| {
+                            format!("{} {e}", tr("Não foi possível ler o log:"))
+                        });
+                        text_dialog::present(ctx2.window().as_ref(), &tr("Log do build"), &text);
+                    },
+                );
+            });
+            add(&button);
+        }
+
+        let copy = gtk::Button::builder().label(tr("Copiar o erro")).build();
+        {
+            let (ctx, text) = (Rc::clone(&self.ctx), full.clone());
+            copy.connect_clicked(move |_| {
+                if let Some(display) = gtk::gdk::Display::default() {
+                    display.clipboard().set_text(&text);
+                    ctx.toast(&tr("Erro copiado"));
+                }
+            });
+        }
+        add(&copy);
+
+        // Isolar o culpado: tentar de novo deixando um dos inputs atualizados na revisão antiga.
+        let changes = self.changes.borrow().clone();
+        if changes.len() > 1
+            || (changes.len() == 1 && !self.pins.borrow().contains_key(&changes[0].name))
+        {
+            self.failure_actions
+                .append(&caption(&tr("Tentar de novo sem atualizar um destes:")));
+            for change in changes {
+                let Some(old_rev) = change.old_rev.clone() else {
+                    continue;
+                };
+                let button = gtk::Button::builder()
+                    .label(format!("{} {}", tr("Tentar sem atualizar"), change.name))
+                    .build();
+                let (w, name) = (Rc::clone(self), change.name.clone());
+                button.connect_clicked(move |_| w.retry_without(&name, &old_rev));
+                add(&button);
+            }
+        }
+        self.failure_actions.set_visible(true);
+    }
+
+    /// Fixa `name` na revisão que o flake.lock já tinha e refaz a atualização com o resto.
+    fn retry_without(self: &Rc<Self>, name: &str, old_rev: &str) {
+        let input = self
+            .inputs
+            .borrow()
+            .iter()
+            .find(|i| i.name == name)
+            .cloned();
+        let flake_ref = input.as_ref().and_then(|i| pin_reference(i, old_rev));
+        let Some(flake_ref) = flake_ref else {
+            self.ctx
+                .toast(&tr("Não dá para fixar este input numa revisão"));
+            return;
+        };
+        self.set_pin(
+            name,
+            Some(Pin {
+                input: name.to_owned(),
+                flake_ref,
+            }),
+        );
+        self.set_step(Step::Choose);
+        self.start_update();
     }
 
     fn push_log(&self, line: &str) {
@@ -1016,12 +1307,7 @@ impl Wizard {
         let title = if totals.updated + totals.added + totals.removed == 0 {
             tr("Nenhuma mudança nos pacotes")
         } else {
-            format!(
-                "{} atualizados, {} e {}",
-                totals.updated,
-                count(totals.added as u64, "novo", "novos"),
-                count(totals.removed as u64, "removido", "removidos")
-            )
+            package_changes(totals.updated, totals.added, totals.removed)
         };
         self.summary_row.set_title(&title);
         let mut parts = Vec::new();
@@ -1032,8 +1318,8 @@ impl Wizard {
             let amount = format_bytes(delta.unsigned_abs());
             parts.push(match delta {
                 0 => tr("o tamanho do sistema não muda"),
-                d if d > 0 => format!("o sistema vai ocupar {amount} a mais"),
-                _ => format!("o sistema vai ocupar {amount} a menos"),
+                d if d > 0 => trf("o sistema vai ocupar {0} a mais", &[amount]),
+                _ => trf("o sistema vai ocupar {0} a menos", &[amount]),
             });
         }
         self.summary_row.set_subtitle(&parts.join(" · "));
@@ -1109,6 +1395,7 @@ impl Wizard {
         });
         self.ctx.go_to(Page::Aplicando);
 
+        let (apply_started, apply_started_at) = (std::time::Instant::now(), epoch_now());
         let (flake, workspace, out_path) = (
             self.ctx.env.flake.clone(),
             self.workspace.clone(),
@@ -1135,8 +1422,9 @@ impl Wizard {
                         if writes_lock {
                             match commit_lock(&flake, &workspace) {
                                 Ok(()) => send(ApplyEvent::LockWritten),
-                                Err(error) => send(ApplyEvent::Log(format!(
-                                    "aviso: não foi possível gravar o flake.lock: {error}"
+                                Err(error) => send(ApplyEvent::Log(trf(
+                                    "aviso: não foi possível gravar o flake.lock: {0}",
+                                    &[error.to_string()],
                                 ))),
                             }
                             let _ = workspace.discard();
@@ -1147,13 +1435,28 @@ impl Wizard {
                 }
             },
             move |event| {
-                let finished_err = matches!(event, ApplyEvent::Finished(Err(_)));
+                if let ApplyEvent::Finished(result) = &event {
+                    let generation =
+                        history::current_system_generation(&ctx.env.system_profiles_dir);
+                    ctx.record(NewOperation {
+                        kind: OperationKind::Update,
+                        started_at: apply_started_at,
+                        duration_ms: elapsed_ms(apply_started),
+                        outcome: if result.is_ok() {
+                            Outcome::Success
+                        } else {
+                            Outcome::Failure
+                        },
+                        generation: result.is_ok().then_some(generation).flatten(),
+                        bytes_freed: None,
+                        detail: result.as_ref().err().map(|e| e.chars().take(200).collect()),
+                    });
+                }
                 ctx.apply_events.publish(&event);
                 if matches!(event, ApplyEvent::Finished(_)) {
                     w.busy.set(false);
                     w.update_buttons();
                 }
-                let _ = finished_err;
             },
         );
     }

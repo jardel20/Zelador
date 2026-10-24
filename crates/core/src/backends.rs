@@ -68,11 +68,20 @@ pub trait NixBackend {
 #[derive(Debug, Clone)]
 pub struct CliNix<R> {
     runner: R,
+    /// `nvd`, se o usuário o prefere e o tem instalado; senão `nix store diff-closures`.
+    nvd: Option<String>,
 }
 
 impl<R: CommandRunner> CliNix<R> {
     pub fn new(runner: R) -> Self {
-        Self { runner }
+        Self { runner, nvd: None }
+    }
+
+    /// Compara sistemas com o `nvd` (caminho ou nome do programa). Se ele falhar, volta ao
+    /// `nix store diff-closures`.
+    pub fn with_nvd(mut self, program: Option<String>) -> Self {
+        self.nvd = program;
+        self
     }
 
     fn stdout(&self, spec: &CommandSpec) -> Result<String> {
@@ -138,6 +147,18 @@ impl<R: CommandRunner> NixBackend for CliNix<R> {
     }
 
     fn diff_closures(&self, old: &str, new: &str) -> Result<Vec<DiffEntry>> {
+        if let Some(program) = &self.nvd {
+            let spec =
+                CommandSpec::new(program.clone()).args(["--color", "never", "diff", old, new]);
+            match self
+                .runner
+                .run(&spec)
+                .and_then(|out| out.into_stdout(&spec))
+            {
+                Ok(text) => return Ok(crate::nvd::parse_nvd(&text).entries),
+                Err(error) => tracing::warn!(%error, "nvd falhou; usando nix store diff-closures"),
+            }
+        }
         let spec = nix().args(["store", "diff-closures", old, new]);
         Ok(parse_diff_closures(&self.stdout(&spec)?))
     }
@@ -377,6 +398,8 @@ pub struct BuildRequest {
 pub trait RebuildBackend {
     /// Comando que constrói o sistema sem ativá-lo, com progresso `internal-json`.
     fn build_command(&self, request: &BuildRequest) -> CommandSpec;
+    /// Comando que só avalia e diz o que seria baixado e construído (sem criar link).
+    fn dry_run_command(&self, request: &BuildRequest) -> CommandSpec;
 }
 
 /// `nix build` direto no `toplevel`. O `nixos-rebuild build` reexecuta a si mesmo a partir da
@@ -385,6 +408,23 @@ pub trait RebuildBackend {
 pub struct NixBuild;
 
 impl RebuildBackend for NixBuild {
+    fn dry_run_command(&self, request: &BuildRequest) -> CommandSpec {
+        let mut spec = CommandSpec::new("nix")
+            .arg("build")
+            .arg(format!(
+                "{}#nixosConfigurations.{}.config.system.build.toplevel",
+                request.flake.display(),
+                request.host
+            ))
+            .args(["--dry-run", "--no-link"]);
+        if let Some(lock) = &request.reference_lock {
+            spec = spec
+                .arg("--reference-lock-file")
+                .arg(lock.to_string_lossy());
+        }
+        spec
+    }
+
     fn build_command(&self, request: &BuildRequest) -> CommandSpec {
         let mut spec = CommandSpec::new("nix")
             .arg("build")
@@ -455,6 +495,47 @@ mod tests {
             reference_lock: None,
         });
         assert!(!plain.args.iter().any(|a| a == "--reference-lock-file"));
+    }
+
+    #[test]
+    fn nvd_quando_pedido_e_diff_closures_como_reserva() {
+        use crate::runner::{CommandRunner, Output};
+        use std::cell::RefCell;
+        struct Scripted(RefCell<Vec<String>>, bool);
+        impl CommandRunner for Scripted {
+            fn run(&self, spec: &CommandSpec) -> Result<Output> {
+                self.0.borrow_mut().push(spec.program.clone());
+                let (stdout, code) = if spec.program == "nvd" {
+                    if self.1 {
+                        ("[C.]  #1  x  1 -> 2\n".to_owned(), 0)
+                    } else {
+                        (String::new(), 2)
+                    }
+                } else {
+                    ("y: 1 → 2\n".to_owned(), 0)
+                };
+                Ok(Output {
+                    stdout,
+                    stderr: String::new(),
+                    code: Some(code),
+                })
+            }
+        }
+        // Sem seção "Version changes:", o nvd não produz entradas: use um texto completo.
+        let ok = Scripted(RefCell::default(), true);
+        let nix = CliNix::new(&ok).with_nvd(Some("nvd".into()));
+        assert!(nix.diff_closures("a", "b").unwrap().is_empty());
+        assert_eq!(ok.0.borrow().as_slice(), ["nvd"]);
+        // nvd falhando: cai no diff-closures.
+        let broken = Scripted(RefCell::default(), false);
+        let nix = CliNix::new(&broken).with_nvd(Some("nvd".into()));
+        let entries = nix.diff_closures("a", "b").unwrap();
+        assert_eq!(entries[0].name, "y");
+        assert_eq!(broken.0.borrow().as_slice(), ["nvd", "nix"]);
+        // Sem nvd, vai direto ao diff-closures.
+        let plain = Scripted(RefCell::default(), true);
+        CliNix::new(&plain).diff_closures("a", "b").unwrap();
+        assert_eq!(plain.0.borrow().as_slice(), ["nix"]);
     }
 
     #[test]

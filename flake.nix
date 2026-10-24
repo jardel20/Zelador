@@ -42,6 +42,7 @@
             libadwaita
             git
             nvd
+            gettext
           ];
           # Fontes da identidade visual visíveis ao fontconfig no devShell. No sistema, o
           # módulo NixOS as instala em fonts.packages.

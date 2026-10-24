@@ -56,6 +56,9 @@ impl FlakeInput {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FlakeMetadata {
     pub inputs: Vec<FlakeInput>,
+    /// Cópia do flake no store (`/nix/store/<hash>-source`): os erros de avaliação citam
+    /// arquivos por esse caminho.
+    pub path: Option<String>,
     /// Revisão git do próprio flake, quando a árvore está limpa.
     pub revision: Option<String>,
     /// Revisão com sufixo `-dirty`, quando há alterações não commitadas.
@@ -68,6 +71,8 @@ struct RawMetadata {
     revision: Option<String>,
     #[serde(default, rename = "dirtyRevision")]
     dirty_revision: Option<String>,
+    #[serde(default)]
+    path: Option<String>,
     locks: RawLocks,
 }
 
@@ -108,6 +113,7 @@ pub fn parse_flake_metadata(json: &str) -> Result<FlakeMetadata> {
         serde_json::from_str(json).map_err(|e| Error::json("flake metadata", e))?;
     Ok(FlakeMetadata {
         inputs: inputs_from_locks(&raw.locks)?,
+        path: raw.path,
         revision: raw.revision,
         dirty_revision: raw.dirty_revision,
     })

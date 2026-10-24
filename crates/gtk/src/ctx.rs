@@ -6,6 +6,7 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 use zelador_core::backends::{CliFlatpak, CliGit, CliNix, NixBackend};
+use zelador_core::history::{NewOperation, record_best_effort};
 use zelador_core::runner::SystemRunner;
 use zelador_core::status::{StatusEnv, SystemStatus, collect_overview};
 
@@ -51,10 +52,25 @@ pub struct Ctx {
     /// Caminhos que o GC apagaria (cerca de 10 s).
     pub dead: Rc<Shared<Result<HashSet<String>, String>>>,
     pub apply_events: Bus<ApplyEvent>,
+    /// Avisa quando uma operação nova entrou no histórico.
+    pub history_changed: Bus<()>,
 }
 
+/// Preferência "comparar com o nvd", definida na abertura e pelo menu.
+static PREFER_NVD: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+pub fn set_prefer_nvd(prefer: bool) {
+    PREFER_NVD.store(prefer, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// O backend do Nix, já com o `nvd` quando o usuário o prefere e ele existe no PATH.
 pub fn nix() -> CliNix<SystemRunner> {
-    CliNix::new(SystemRunner)
+    let nvd = PREFER_NVD
+        .load(std::sync::atomic::Ordering::Relaxed)
+        .then(|| zelador_core::nvd::find_in_path("nvd"))
+        .flatten()
+        .map(|path| path.to_string_lossy().into_owned());
+    CliNix::new(SystemRunner).with_nvd(nvd)
 }
 
 pub fn git() -> CliGit<SystemRunner> {
@@ -85,6 +101,7 @@ impl Ctx {
             sizes,
             dead,
             apply_events: Bus::default(),
+            history_changed: Bus::default(),
         })
     }
 
@@ -110,7 +127,30 @@ impl Ctx {
         }
     }
 
+    /// Grava a operação no histórico (fora da thread principal) e avisa quem exibe a lista.
+    pub fn record(self: &Rc<Self>, op: NewOperation) {
+        let env = self.env.clone();
+        let ctx = Rc::clone(self);
+        crate::loader::run_in_background(
+            move || record_best_effort(&env, &op),
+            move |()| ctx.history_changed.publish(&()),
+        );
+    }
+
     pub fn toast(&self, message: &str) {
         self.toasts.add_toast(adw::Toast::new(message));
     }
+}
+
+/// Epoch atual, em segundos. `StatusEnv::now` é fixado na abertura do app: serve para idades,
+/// não para carimbar operações.
+pub fn epoch_now() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| i64::try_from(d.as_secs()).unwrap_or(0))
+}
+
+/// Milissegundos desde `started`, para o histórico.
+pub fn elapsed_ms(started: std::time::Instant) -> u64 {
+    u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX)
 }

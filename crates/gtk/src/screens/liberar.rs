@@ -18,14 +18,15 @@ use zelador_core::cleanup::{
     build_plan, closure_index, dry_run, estimate, link_sizes,
 };
 use zelador_core::disk::free_bytes;
+use zelador_core::history::{NewOperation, OperationKind, Outcome};
 use zelador_core::runner::SystemRunner;
 use zelador_core::status::SystemStatus;
 use zelador_core::units::format_bytes;
 
 use super::Screen;
-use crate::ctx::{Ctx, nix};
+use crate::ctx::{Ctx, elapsed_ms, epoch_now, nix};
 use crate::format::relative_age;
-use crate::i18n::tr;
+use crate::i18n::{tr, trf};
 use crate::loader::run_in_background;
 
 type Sizes = Rc<Result<HashMap<String, u64>, String>>;
@@ -598,7 +599,10 @@ impl Ui {
         self.generations_text.set_label(&if n_system + n_hm == 0 {
             tr("Nenhuma geração sairia com essa política.")
         } else {
-            format!("Saem {} do sistema e {} do Home Manager.", n_system, n_hm)
+            trf(
+                "Saem {0} do sistema e {1} do Home Manager.",
+                &[n_system.to_string(), n_hm.to_string()],
+            )
         });
         self.generations_size
             .set_label(&format_bytes(gens.generations));
@@ -619,9 +623,9 @@ impl Ui {
         let plan = self.plan(&data);
         let total: Estimate = estimate(&data.index, sizes, dead, &plan, flatpak_bytes);
         if plan.runs_gc() {
-            self.unreferenced.set_label(&format!(
-                "Também serão removidos {} de caminhos sem referência, na coleta de lixo.",
-                format_bytes(total.unreferenced)
+            self.unreferenced.set_label(&trf(
+                "Também serão removidos {0} de caminhos sem referência, na coleta de lixo.",
+                &[format_bytes(total.unreferenced)],
             ));
         } else {
             self.unreferenced.set_label("");
@@ -698,19 +702,19 @@ fn describe_plan(
             .join(", ")
     };
     if !plan.system_generations.is_empty() {
-        lines.push(format!(
-            "• Gerações do sistema: {}",
-            list(&plan.system_generations)
+        lines.push(trf(
+            "• Gerações do sistema: {0}",
+            &[list(&plan.system_generations)],
         ));
     }
     if !plan.home_manager_generations.is_empty() {
-        lines.push(format!(
-            "• Gerações do Home Manager: {}",
-            list(&plan.home_manager_generations)
+        lines.push(trf(
+            "• Gerações do Home Manager: {0}",
+            &[list(&plan.home_manager_generations)],
         ));
     }
     for root in &plan.links {
-        lines.push(format!("• Link: {}", root.path.display()));
+        lines.push(trf("• Link: {0}", &[root.path.display().to_string()]));
     }
     if plan.flatpak {
         lines.push(tr("• Runtimes Flatpak sem uso"));
@@ -719,8 +723,9 @@ fn describe_plan(
         lines.push(tr("• Deduplicar o store"));
     }
     if let Some(paths) = gc_paths {
-        lines.push(format!(
-            "• A coleta de lixo apagaria hoje {paths} caminhos (simulação do Nix)."
+        lines.push(trf(
+            "• A coleta de lixo apagaria hoje {0} caminhos (simulação do Nix).",
+            &[paths.to_string()],
         ));
     }
     if let (Ok(sizes), Ok(dead)) = (&*data.sizes, &*data.dead) {
@@ -731,9 +736,9 @@ fn describe_plan(
             plan,
             data.status.flatpak.as_ref().map_or(0, |f| f.unused_bytes),
         );
-        lines.push(format!(
-            "Estimativa total: {}.",
-            format_bytes(total.total())
+        lines.push(trf(
+            "Estimativa total: {0}.",
+            &[format_bytes(total.total())],
         ));
     }
     lines.join("\n")
@@ -880,6 +885,8 @@ fn start_cleaning(ui: &Rc<Ui>) {
         plan,
         stop,
         before,
+        started: std::time::Instant::now(),
+        started_at: epoch_now(),
     });
     run_step(&run, 0);
 }
@@ -894,6 +901,8 @@ struct Run {
     plan: CleanupPlan,
     stop: Rc<Cell<bool>>,
     before: u64,
+    started: std::time::Instant,
+    started_at: i64,
 }
 
 fn make_step_row(container: &gtk::Box, step: &Step, plan: &CleanupPlan) -> StepRow {
@@ -999,6 +1008,19 @@ fn finish(run: &Rc<Run>, problem: Option<String>) {
     });
     let after = free_bytes(std::path::Path::new("/nix")).unwrap_or(0);
     let freed = after.saturating_sub(run.before);
+    run.ui.ctx.record(NewOperation {
+        kind: OperationKind::Clean,
+        started_at: run.started_at,
+        duration_ms: elapsed_ms(run.started),
+        outcome: if problem.is_none() {
+            Outcome::Success
+        } else {
+            Outcome::Failure
+        },
+        generation: None,
+        bytes_freed: problem.is_none().then_some(freed),
+        detail: problem.as_ref().map(|p| p.chars().take(200).collect()),
+    });
     match problem {
         None => {
             run.status_label.set_label(&format!(

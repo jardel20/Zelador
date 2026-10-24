@@ -24,6 +24,7 @@ fn main() -> gtk::glib::ExitCode {
         .with_writer(std::io::stderr)
         .init();
 
+    i18n::init();
     if let Err(error) = gtk::gio::resources_register_include!("zelador.gresource") {
         tracing::error!(%error, "não foi possível registrar os recursos embutidos");
         return gtk::glib::ExitCode::FAILURE;
@@ -32,6 +33,7 @@ fn main() -> gtk::glib::ExitCode {
     let app = adw::Application::builder().application_id(APP_ID).build();
     app.connect_startup(|app| {
         let settings = settings::Settings::load();
+        ctx::set_prefer_nvd(settings.prefer_nvd);
         if let Some(style) = style::Style::install(settings) {
             actions::install(app, &style, settings);
             // O estilo precisa viver tanto quanto o app.
