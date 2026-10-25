@@ -2,7 +2,9 @@
 
 **An operations panel for NixOS**: update the system with a review before applying, roll back to an earlier generation and free up disk space, all in a GTK4/libadwaita window, without having to remember commands.
 
-[Versão em português](README.md) · [Docs (Portuguese)](docs/) · [MIT license](LICENSE)
+[![CI](https://github.com/jardel20/Zelador/actions/workflows/ci.yml/badge.svg)](https://github.com/jardel20/Zelador/actions/workflows/ci.yml)
+
+[Versão em português](README.md) · [Docs (Portuguese)](docs/) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [MIT license](LICENSE)
 
 <p align="center">
   <img src="design/screenshots/readme/claro/seu-sistema.png" alt="Your system screen" width="49%">
@@ -134,6 +136,10 @@ cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
 nix build .#checks.x86_64-linux.helper-vm   # helper test in a NixOS VM (needs KVM)
 ```
+
+## Contributing
+
+Issues and PRs are welcome, in Portuguese or English. See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues: [SECURITY.md](SECURITY.md).
 
 ## License
 

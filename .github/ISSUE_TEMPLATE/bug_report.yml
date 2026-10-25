@@ -1,0 +1,52 @@
+name: Relatar um bug
+description: Algo não funciona como esperado
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por relatar! **Não cole dados pessoais** (e-mails, tokens, caminhos privados). Falhas de segurança no helper: use o link de segurança, não esta issue.
+  - type: textarea
+    id: o-que-aconteceu
+    attributes:
+      label: O que aconteceu
+      description: E o que você esperava que acontecesse.
+    validations:
+      required: true
+  - type: textarea
+    id: como-reproduzir
+    attributes:
+      label: Como reproduzir
+      placeholder: |
+        1. Abrir a tela Atualizar
+        2. Escolher o input X
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: onde
+    attributes:
+      label: Onde aconteceu
+      options:
+        - App (janela)
+        - CLI (zelador-core)
+        - Helper privilegiado / polkit
+        - Timer de verificação / notificação
+        - Módulo NixOS
+        - Outro
+    validations:
+      required: true
+  - type: textarea
+    id: ambiente
+    attributes:
+      label: Ambiente
+      description: Saída de `nixos-version`, `nix --version` e do commit do Zelador (`nix flake metadata github:jardel20/Zelador`, ou o `rev` do seu `flake.lock`).
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Saída da CLI ou do app (`RUST_LOG=debug zelador`). Revise antes de colar.
+      render: text

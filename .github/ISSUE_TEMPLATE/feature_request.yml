@@ -1,0 +1,27 @@
+name: Sugerir uma melhoria
+description: Uma ideia para o Zelador
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        O Zelador é uma camada de **operação** sobre `nix`, `git` e `flatpak`. Fora de escopo: editor de configuração, loja de pacotes, canais/`nix-env`, contêineres e agendador próprio de limpeza.
+  - type: textarea
+    id: problema
+    attributes:
+      label: Qual problema você quer resolver?
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Como imagina a solução
+    validations:
+      required: false
+  - type: checkboxes
+    id: regras
+    attributes:
+      label: Confirmações
+      options:
+        - label: Não exige editar arquivos `.nix` do usuário nem rodar a interface como root.
+          required: true

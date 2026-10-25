@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# Nada aqui precisa escrever no repositório.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Formatação, lint e testes unitários/de integração (sem GTK em execução, sem VM).
+  rust:
+    name: fmt, clippy e testes
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - run: nix develop -c cargo fmt --all --check
+      - run: nix develop -c cargo clippy --workspace --all-targets -- -D warnings
+      - run: nix develop -c cargo test --workspace
+
+  # Os três pacotes, o módulo NixOS e a avaliação de todo o flake (sem rodar a VM aqui).
+  nix:
+    name: pacotes e flake
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - run: nix flake check --no-build
+      - run: nix build .#zelador .#zelador-core .#zelador-helper --print-build-logs
+
+  # O helper privilegiado numa VM NixOS: socket do systemd, polkit, recusas, activate,
+  # rollback, limpeza. Precisa de KVM, que o runner da GitHub oferece depois desta regra.
+  vm:
+    name: helper numa VM NixOS
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Liberar o KVM para todos os usuários
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            system-features = nixos-test benchmark big-parallel kvm
+      - run: nix build .#checks.x86_64-linux.helper-vm --print-build-logs

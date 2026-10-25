@@ -2,7 +2,9 @@
 
 **Painel operacional do NixOS**: atualizar o sistema com revisão antes de aplicar, voltar para uma geração anterior e liberar espaço em disco, tudo numa janela GTK4/libadwaita, sem precisar decorar comandos.
 
-[English version](README.en.md) · [Documentação](docs/) · [Licença MIT](LICENSE)
+[![CI](https://github.com/jardel20/Zelador/actions/workflows/ci.yml/badge.svg)](https://github.com/jardel20/Zelador/actions/workflows/ci.yml)
+
+[English version](README.en.md) · [Documentação](docs/) · [Contribuir](CONTRIBUTING.md) · [Segurança](SECURITY.md) · [Licença MIT](LICENSE)
 
 <p align="center">
   <img src="design/screenshots/readme/claro/seu-sistema.png" alt="Tela Seu sistema" width="49%">
@@ -145,7 +147,6 @@ A explicação completa está em [docs/arquitetura.md](docs/arquitetura.md); o m
 - **A estimativa de espaço é um limite superior.** O Nix informa o tamanho lógico dos caminhos, que ignora arquivos compartilhados por hardlink; o app limita pelo uso real do disco, mas o valor exato só se conhece depois de limpar.
 - **Precisa de um agente do polkit.** Sem ele, as ações privilegiadas são recusadas (e o app mostra o motivo).
 - **A notificação do timer** usa `notify-send`; depende de o seu daemon de notificações aceitá-lo.
-- **A tradução para o inglês** foi feita por IA e não foi revisada por uma pessoa. Correções são bem-vindas.
 - **Atualizar pode quebrar a sua configuração** se um input novo remover opções que você usa. O Zelador constrói **antes** de aplicar justamente para mostrar isso como erro de build, sem tocar no sistema.
 
 ## Desenvolvimento
@@ -159,6 +160,10 @@ nix build .#checks.x86_64-linux.helper-vm   # teste do helper numa VM NixOS (pre
 
 Veja [docs/desenvolvimento.md](docs/desenvolvimento.md) para a estrutura do código, fixtures, screenshots headless e traduções.
 
+## Contribuir
+
+Issues e PRs são bem-vindos, em português ou inglês. Veja [CONTRIBUTING.md](CONTRIBUTING.md). Falhas de segurança: [SECURITY.md](SECURITY.md).
+
 ## Documentação
 
 - [docs/arquitetura.md](docs/arquitetura.md): como cada parte funciona, fluxo por fluxo.
@@ -169,4 +174,4 @@ Veja [docs/desenvolvimento.md](docs/desenvolvimento.md) para a estrutura do cód
 
 ## Créditos e licença
 
-MIT, veja [LICENSE](LICENSE). Ícones [Phosphor](https://phosphoricons.com) (MIT) embutidos no binário; fontes Poppins e JetBrains Mono (SIL OFL) instaladas pelo módulo. Construído sobre `nix`, `libadwaita`, `gtk4-rs`, `rusqlite` e muito trabalho da comunidade NixOS.
+MIT, veja [LICENSE](LICENSE). Ícones [Phosphor](https://phosphoricons.com) (MIT) embutidos no binário; fontes Poppins e JetBrains Mono (SIL OFL) instaladas pelo módulo. Construído sobre `nix`, `libadwaita` e `gtk4-rs`, `rusqlite`.

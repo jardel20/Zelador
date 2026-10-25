@@ -96,6 +96,14 @@ nix develop path:. -c tools/extract-pot.sh   # extrai os textos para po/zelador.
 
 Qualquer mudança em `crates/helper` precisa: manter o conjunto de subcomandos fechado, validar no helper (nunca confiar na UI), ter **testes de rejeição** e passar na VM. Veja [seguranca.md](seguranca.md).
 
-## Estado da CI
+## Integração contínua
 
-Não há CI configurada ainda. O equivalente local é: fmt, clippy `-D warnings`, `cargo test --workspace`, `nix build` dos três pacotes e o check da VM.
+`.github/workflows/ci.yml` roda a cada push no `master` e a cada PR, em três jobs:
+
+| Job | O que roda |
+|---|---|
+| `rust` | `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test --workspace` (dentro do `nix develop`) |
+| `nix` | `nix flake check --no-build` e o build dos três pacotes |
+| `vm` | `nix build .#checks.x86_64-linux.helper-vm` (o helper, o socket do systemd e o polkit numa VM NixOS; usa KVM do runner) |
+
+O equivalente local é exatamente esse conjunto. O Dependabot propõe, uma vez por mês, atualizações do Cargo e das Actions. Os modelos de issue e de PR ficam em `.github/`.
