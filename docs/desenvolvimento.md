@@ -43,7 +43,7 @@ po/                    zelador.pot, pt_BR.po, en.po
 - Logs com `tracing`.
 - **Nunca** execute comandos destrutivos ou privilegiados no seu sistema real durante o desenvolvimento. Testes destrutivos são só na VM.
 - **Nunca** edite arquivos `.nix` fora do repositório.
-- Interface: siga `design/mockups/` e os tokens do `SPEC.md`. Na dúvida entre um widget libadwaita e um próprio, use o do libadwaita.
+- Interface: siga `design/mockups/` e os tokens em `crates/gtk/resources/css/tokens-*.css`. Na dúvida entre um widget libadwaita e um próprio, use o do libadwaita.
 - Textos da interface em pt-BR, sempre por `tr`/`trf`/`tn` (veja Traduções).
 
 ## Fixtures: quando uma CLI muda

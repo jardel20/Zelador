@@ -17,7 +17,7 @@ Obrigado por querer ajudar! Contribuições em **português ou inglês** são be
 - `thiserror` no `core`, `anyhow` só nos binários. **Sem `unwrap`/`expect` fora de testes** (o clippy barra). `unsafe` é proibido.
 - Logs com `tracing`.
 - Mudou a saída de uma CLI (`nix`, `nvd`, `flatpak`)? **Atualize a fixture e o teste**; não "conserte" o parser às cegas. Anonimize dados pessoais nas fixtures.
-- Interface: siga `design/mockups/` e os tokens do `SPEC.md`. Na dúvida entre um widget do libadwaita e um próprio, use o do libadwaita.
+- Interface: siga `design/mockups/` e os tokens em `crates/gtk/resources/css/tokens-*.css`. Na dúvida entre um widget do libadwaita e um próprio, use o do libadwaita.
 
 ## Mudanças no helper privilegiado
 

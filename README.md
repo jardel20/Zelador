@@ -170,7 +170,7 @@ Issues e PRs são bem-vindos, em português ou inglês. Veja [CONTRIBUTING.md](C
 - [docs/seguranca.md](docs/seguranca.md): modelo de ameaças e as defesas do helper.
 - [docs/uso-no-nixos.md](docs/uso-no-nixos.md): instalar, configurar e desfazer.
 - [docs/desenvolvimento.md](docs/desenvolvimento.md): compilar, testar, contribuir.
-- [SPEC.md](SPEC.md) e [design/](design/): a especificação original e a identidade visual.
+- [design/](design/): os mockups e os ícones da identidade visual (os tokens de cor e tipografia estão em `crates/gtk/resources/css/`).
 
 ## Créditos e licença
 
