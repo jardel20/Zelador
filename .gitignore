@@ -52,3 +52,7 @@ vgcore.*
 design/screenshots/*
 !design/screenshots/readme/
 design/screenshots/_*
+
+# Documentos de trabalho locais (especificação original e instruções para assistentes de IA)
+/SPEC.md
+/CLAUDE.md
