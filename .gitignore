@@ -1,1 +1,54 @@
-/target
+# Build (Cargo e Nix)
+target/
+result
+result-*
+*.drv
+
+# Ambiente local (direnv, variáveis, segredos)
+.direnv/
+.envrc
+.env
+.env.*
+*.pem
+*.key
+
+# Dados locais do app e do Nix (nunca vão para o repositório)
+history.db
+*.db
+*.sqlite
+*.sqlite3
+/state/
+/update/
+
+# Traduções compiladas: o Nix gera os .mo a partir de po/*.po
+*.mo
+*.po~
+*.pot~
+
+# Ferramentas de IA e sessões de trabalho locais
+.claude/
+.cursor/
+.aider*
+CLAUDE.local.md
+
+# Editores e sistema operacional
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Resíduos de merge/patch e logs
+*.orig
+*.rej
+*.log
+*.profraw
+vgcore.*
+
+# Capturas de tela de trabalho (revisão de cada fase, comparações, testes).
+# Só design/screenshots/readme/ é publicado: é o que o README usa.
+design/screenshots/*
+!design/screenshots/readme/
+design/screenshots/_*
